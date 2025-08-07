@@ -1,103 +1,136 @@
-import Image from "next/image";
+'use client'; 
 
-export default function Home() {
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+// Import Types from your new central types file
+import { ProjectData, PersonWithRole, LocationFull, GroupShot, PhotoRequest, TimelineEvent } from '@/types';
+
+// Import Layout & Section Components
+import { Header } from '@/components/layouts/Header';
+import { StatusBar } from '@/components/layouts/StatusBar';
+import { KeyPeopleSection } from '@/components/sections/KeyPeopleSection';
+import { LocationsSection } from '@/components/sections/LocationsSection';
+import { GroupPhotosSection } from '@/components/sections/GroupPhotosSection';
+import { PhotoRequestsSection } from '@/components/sections/PhotoRequestsSection';
+import { TimelineSection } from '@/components/sections/TimelineSection';
+
+// Import the LIVE project service
+import { projectService } from '@/lib/projectService';
+
+const PLANNING_STEPS = [
+  { id: 'people', title: 'Step 1: Key People', description: 'Let\'s start by adding the main wedding party and family members.' },
+  { id: 'locations', title: 'Step 2: Locations', description: 'Now, tell us about the key places for the day.' },
+  { id: 'groups', title: 'Step 3: Group Photos', description: 'Plan your formal group photos. Use our suggestions or create your own.' },
+  { id: 'requests', title: 'Step 4: Special Requests', description: 'Add any specific, must-have photo ideas.' },
+  { id: 'timeline', title: 'Step 5: Timeline', description: 'Finally, outline the main events of your day.' },
+  { id: 'complete', title: 'All Done!', description: 'Thank you! Your photographer will review the details and be in touch.' },
+];
+
+function PortalPageContent() {
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  
+  // Memoize projectId to prevent re-renders if searchParams object changes but value doesn't
+  const projectId = React.useMemo(() => searchParams?.get('project'), [searchParams]);
+
+  useEffect(() => {
+    // FIX: Access searchParams inside useEffect to ensure it's client-side
+    const token = searchParams?.get('token');
+
+    if (!projectId || !token) {
+      setError("Invalid or missing portal link.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Authenticate and get initial data
+    projectService.getProjectData(projectId, token)
+      .then(() => {
+        // Set up the real-time listener
+        const unsubscribe = projectService.listenToProjectUpdates(projectId, (data) => {
+          setProjectData(data);
+          setCurrentStep(data.portalStatus?.currentStep || 0);
+          setIsLoading(false);
+        });
+        // Return the unsubscribe function for cleanup
+        return () => unsubscribe();
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : "An unknown error occurred.");
+        setIsLoading(false);
+      });
+  }, [projectId, searchParams]);
+
+  const handleStepChange = (newStep: number) => {
+    if (!projectId) return;
+    projectService.updatePortalStatus(projectId, newStep);
+  };
+
+  // --- Handler functions now call the service to update Firestore ---
+  const handleAddPerson = (newPerson: Omit<PersonWithRole, 'id'>) => {
+    if (projectId) projectService.addPerson(projectId, newPerson);
+  };
+  const handleAddLocation = (newLocation: Omit<LocationFull, 'id'>) => {
+    if (projectId) projectService.addLocation(projectId, newLocation);
+  };
+  const handleAddCustomGroup = (newGroup: Omit<GroupShot, 'id'>) => {
+    if (projectId) projectService.addGroup(projectId, newGroup);
+  };
+  const handleAddSuggestedGroup = (suggestedGroup: {id: string, name: string, notes?: string}) => {
+    const newGroup: Omit<GroupShot, 'id'> = { name: suggestedGroup.name, notes: suggestedGroup.notes, peopleIds: [] };
+    if (projectId) projectService.addGroup(projectId, newGroup);
+  };
+  const handleAddRequest = (newRequest: Omit<PhotoRequest, 'id'>) => {
+    if (projectId) projectService.addPhotoRequest(projectId, newRequest);
+  };
+  const handleAddEvent = (newEvent: Omit<TimelineEvent, 'id'>) => {
+    if (projectId) projectService.addTimelineEvent(projectId, newEvent);
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center h-screen">Authenticating & Loading Project...</div>;
+  if (error) return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
+  if (!projectData) return <div className="flex items-center justify-center h-screen">Could not load project data.</div>;
+
+  const activeSection = PLANNING_STEPS[currentStep]?.id;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+    <div className="container mx-auto p-4 md:p-8">
+      <Header 
+        projectName={projectData.projectInfo.projectName} 
+        photographerName={"Your Photographer"}
+      />
+      <StatusBar 
+        steps={PLANNING_STEPS}
+        currentStep={currentStep}
+        onNext={() => handleStepChange(currentStep + 1)}
+        onPrev={() => handleStepChange(currentStep - 1)}
+      />
+      <main>
+        {activeSection === 'people' && <KeyPeopleSection people={projectData.peopleInfo?.weddingParty || []} onAddPerson={handleAddPerson} />}
+        {activeSection === 'locations' && <LocationsSection locations={projectData.locationInfo || []} onAddLocation={handleAddLocation} />}
+        {activeSection === 'groups' && <GroupPhotosSection customGroups={projectData.groupShots || []} people={projectData.peopleInfo?.weddingParty || []} onAddCustomGroup={handleAddCustomGroup} onAddSuggestedGroup={handleAddSuggestedGroup} />}
+        {activeSection === 'requests' && <PhotoRequestsSection requests={projectData.photoInfo?.photoRequests || []} onAddRequest={handleAddRequest} />}
+        {activeSection === 'timeline' && <TimelineSection events={projectData.timeline?.events || []} onAddEvent={handleAddEvent} />}
+        {activeSection === 'complete' && (
+          <div className="text-center p-8 bg-white rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold text-green-600">Thank You!</h2>
+            <p className="mt-2 text-gray-700">All your information has been saved. Your photographer will review everything and be in touch soon.</p>
+          </div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
+  );
+}
+
+export default function PortalPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <PortalPageContent />
+    </Suspense>
   );
 }
