@@ -31,6 +31,7 @@ export const projectService = {
 
       // 3. Check for any network or function errors
       if (!response.ok) {
+        // Try to parse the error message from the function's response
         const errorData = await response.json();
         throw new Error(errorData.error || `Authentication failed with status: ${response.status}`);
       }
