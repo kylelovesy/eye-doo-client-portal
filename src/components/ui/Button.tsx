@@ -1,3 +1,4 @@
+import { useAppStyles, useAppThemeColors } from '@/lib/useAppStyle';
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -5,16 +6,33 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary';
 }
 
-export const Button = ({ children, variant = 'primary', ...props }: ButtonProps) => {
-  const baseClasses = "font-bold py-2 px-6 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
-  
-  const variantClasses = {
-    primary: "bg-[#4A90E2] text-white hover:bg-[#357ABD] focus:ring-[#4A90E2]", // theme.primary
-    secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400",
-  };
+export const Button = ({ children, variant = 'primary', style, ...props }: ButtonProps) => {
+  const colors = useAppThemeColors();
+  const { spacing, borderRadius } = useAppStyles();
+
+  const baseClasses = "font-bold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors";
+
+  const computedStyle: React.CSSProperties =
+    variant === 'primary'
+      ? {
+          backgroundColor: colors.primary,
+          color: colors.onPrimary,
+          paddingBlock: spacing.sm,
+          paddingInline: 24,
+          borderRadius: borderRadius.md,
+          ...style,
+        }
+      : {
+          backgroundColor: colors.surfaceVariant,
+          color: colors.onSurface,
+          paddingBlock: spacing.sm,
+          paddingInline: 24,
+          borderRadius: borderRadius.md,
+          ...style,
+        };
 
   return (
-    <button className={`${baseClasses} ${variantClasses[variant]}`} {...props}>
+    <button className={baseClasses} style={computedStyle} {...props}>
       {children}
     </button>
   );

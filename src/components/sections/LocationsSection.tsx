@@ -1,10 +1,13 @@
 'use client';
 
+import { SvgIcon } from '@/components/ui/Icon';
+import { getLocationIconSrc } from '@/lib/iconMaps';
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import { LocationFull, LocationType } from '@/types';
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { LocationFull, LocationType } from '@/types';
 
 interface LocationsSectionProps {
   locations: LocationFull[];
@@ -13,6 +16,8 @@ interface LocationsSectionProps {
 
 export const LocationsSection = ({ locations, onAddLocation }: LocationsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,20 +37,25 @@ export const LocationsSection = ({ locations, onAddLocation }: LocationsSectionP
   return (
     <section aria-labelledby="locations-heading">
       <div className="text-center mb-6">
-        <h2 id="locations-heading" className="text-2xl font-bold text-gray-800">Wedding Locations</h2>
-        <p className="mt-2 text-gray-600 max-w-2xl mx-auto">Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.</p>
+        <h2 id="locations-heading" style={t.titleLarge}>Wedding Locations</h2>
+        <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
+          Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.
+        </p>
         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
       </div>
 
       <div className="space-y-4 max-w-3xl mx-auto">
         {locations && locations.length > 0 ? (
           locations.map(loc => (
-            <div key={loc.id} className="bg-white rounded-lg shadow-md p-5">
+            <div key={loc.id} className="rounded-lg shadow-md p-5" style={{ backgroundColor: colors.surface }}>
               <div className="flex justify-between items-start">
-                <h3 className="text-xl font-bold text-gray-800">{loc.locationName}</h3>
-                <span className="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{loc.locationType}</span>
+                <div className="flex items-center gap-3">
+                  <SvgIcon src={getLocationIconSrc(loc.locationType)} size={28} color={colors.primary} title={loc.locationType} />
+                  <h3 style={t.titleMedium}>{loc.locationName}</h3>
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>{loc.locationType}</span>
               </div>
-              <p className="text-gray-600 mt-1">{loc.locationAddress1}</p>
+              <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress1}</p>
             </div>
           ))
         ) : (
@@ -68,7 +78,7 @@ export const LocationsSection = ({ locations, onAddLocation }: LocationsSectionP
           <div className="mb-4">
             <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address / Notes</label>
             <textarea id="locationAddress1" name="locationAddress1" rows={2} required placeholder="e.g., 123 Country Lane, Chepstow" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
- dais          </div>
+          </div>
           <div className="flex justify-end space-x-3 mt-6">
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
             <Button type="submit">Save Location</Button>

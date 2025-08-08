@@ -1,4 +1,4 @@
-import React from 'react';
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
 
 interface HeaderProps {
   projectName: string;
@@ -6,13 +6,14 @@ interface HeaderProps {
 }
 
 export const Header = ({ projectName, photographerName }: HeaderProps) => {
+  const t = useTypography();
+  const colors = useAppThemeColors();
+
   return (
     <header className="text-center mb-6">
-      <h1 className="text-3xl md:text-4xl font-bold text-[#1A1A1A]">
-        {projectName}
-      </h1>
-      <p className="text-lg text-gray-600 mt-2">Planning Portal</p>
-      <p className="text-sm text-gray-500">Shared by your photographer: {photographerName}</p>
+      <h1 style={{ ...t.headlineLarge }}>{projectName}</h1>
+      <p style={{ ...t.onSurfaceVariant.bodyLarge, marginTop: 8 }}>Planning Portal</p>
+      <p style={{ ...t.onSurfaceVariant.bodySmall }}>Shared by your photographer: {photographerName}</p>
     </header>
   );
 };

@@ -1,11 +1,12 @@
 'use client';
 
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import { PersonWithRole, RelationshipToCouple } from '@/types';
+import Image from 'next/image';
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { PersonWithRole, RelationshipToCouple } from '@/types';
-import Image from 'next/image';
 
 interface KeyPeopleSectionProps {
   people: PersonWithRole[];
@@ -14,6 +15,8 @@ interface KeyPeopleSectionProps {
 
 export const KeyPeopleSection = ({ people, onAddPerson }: KeyPeopleSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -34,15 +37,17 @@ export const KeyPeopleSection = ({ people, onAddPerson }: KeyPeopleSectionProps)
   return (
     <section aria-labelledby="key-people-heading">
       <div className="text-center mb-6">
-        <h2 id="key-people-heading" className="text-2xl font-bold text-gray-800">The Wedding Party & Family</h2>
-        <p className="mt-2 text-gray-600 max-w-2xl mx-auto">Please add the key members of your wedding party and immediate family. This helps your photographer identify everyone on the big day!</p>
+        <h2 id="key-people-heading" style={t.titleLarge}>The Wedding Party & Family</h2>
+        <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
+          Please add the key members of your wedding party and immediate family. This helps your photographer identify everyone on the big day!
+        </p>
         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Person</Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {people && people.length > 0 ? (
           people.map(person => (
-            <div key={person.id} className="bg-white rounded-lg shadow-lg p-5 text-center">
+            <div key={person.id} className="rounded-lg shadow-lg p-5 text-center" style={{ backgroundColor: colors.surface }}>
               <Image
                 src={`https://placehold.co/400x400/E9ECEF/1A1A1A?text=${person.fullName.charAt(0)}`}
                 alt=""
@@ -50,10 +55,12 @@ export const KeyPeopleSection = ({ people, onAddPerson }: KeyPeopleSectionProps)
                 width={96}
                 height={96}
               />
-              <h3 className="text-xl font-bold text-gray-800">{person.fullName}</h3>
-              <p className="text-[#4A90E2] font-semibold">{person.role}</p>
-              <p className="text-sm text-gray-500">{person.relationship}</p>
-              {person.notes && <p className="text-sm text-gray-600 mt-2 bg-gray-100 p-2 rounded-md">“{person.notes}”</p>}
+              <h3 style={t.titleMedium}>{person.fullName}</h3>
+              <p style={{ ...t.primary.bodyLarge, fontWeight: 600 }}>{person.role}</p>
+              <p style={t.onSurfaceVariant.bodySmall}>{person.relationship}</p>
+              {person.notes && (
+                <p className="mt-2 p-2 rounded-md" style={{ ...t.onSurfaceVariant.bodySmall, backgroundColor: colors.surfaceVariant }}>“{person.notes}”</p>
+              )}
             </div>
           ))
         ) : (

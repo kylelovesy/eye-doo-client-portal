@@ -1,10 +1,11 @@
 'use client';
 
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import { PhotoRequest } from '@/types';
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { PhotoRequest } from '@/types';
 
 interface PhotoRequestsSectionProps {
   requests: PhotoRequest[];
@@ -14,6 +15,8 @@ interface PhotoRequestsSectionProps {
 export const PhotoRequestsSection = ({ requests, onAddRequest }: PhotoRequestsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,15 +45,17 @@ export const PhotoRequestsSection = ({ requests, onAddRequest }: PhotoRequestsSe
   return (
     <section aria-labelledby="requests-heading">
       <div className="text-center mb-6">
-        <h2 id="requests-heading" className="text-2xl font-bold text-gray-800">Specific Photo Requests</h2>
-        <p className="mt-2 text-gray-600 max-w-2xl mx-auto">Have a specific photo idea from Pinterest or your imagination? Add it here. Please provide a description and a reference image if you have one.</p>
+        <h2 id="requests-heading" style={t.titleLarge}>Specific Photo Requests</h2>
+        <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
+          Have a specific photo idea from Pinterest or your imagination? Add it here. Please provide a description and a reference image if you have one.
+        </p>
         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Request</Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {requests && requests.length > 0 ? (
           requests.map(req => (
-            <div key={req.id} className="bg-white rounded-lg shadow-lg group">
+            <div key={req.id} className="rounded-lg shadow-lg group" style={{ backgroundColor: colors.surface }}>
               <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200">
                 <img
                   src={req.imageUrl || `https://placehold.co/400x300/E9ECEF/1A1A1A?text=Request`}
@@ -58,7 +63,7 @@ export const PhotoRequestsSection = ({ requests, onAddRequest }: PhotoRequestsSe
                   className="w-full h-full object-cover object-center"
                 />
               </div>
-              <p className="p-4 text-gray-700">{req.request}</p>
+              <p className="p-4" style={t.bodyMedium}>{req.request}</p>
             </div>
           ))
         ) : (

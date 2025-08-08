@@ -72,5 +72,11 @@ export const DEFAULT_GROUP_SHOT_CATEGORIES: WebDefaultGroupShotsCategory[] = [
             {id:'gsfu04', name: 'Confetti toss', notes: 'Guests throwing confetti around the couple', checked: false },
             {id:'gsfu05', name: 'Hobby group', notes: 'Couple with guests from a shared hobby or club', checked: false },
         ]
+    },
+    {
+        id: 'group_shot_cat_others',
+        displayName: 'Others',
+        isPredefined: true,
+        items: []
     }
 ];

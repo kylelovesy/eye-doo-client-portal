@@ -1,4 +1,4 @@
-import React from 'react';
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
 import { Button } from '../ui/Button';
 
 interface StatusBarProps {
@@ -10,16 +10,20 @@ interface StatusBarProps {
 
 export const StatusBar = ({ currentStep, steps, onNext, onPrev }: StatusBarProps) => {
   const step = steps[currentStep];
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
   return (
-    <div className="bg-white border-l-4 border-[#4A90E2] p-4 rounded-lg mb-8 text-center shadow">
-      <h3 className="font-bold text-lg text-gray-800">{step.title}</h3>
-      <p className="text-gray-600">{step.description}</p>
+    <div
+      className="p-4 rounded-lg mb-8 text-center shadow"
+      style={{ backgroundColor: colors.surface, borderLeft: `4px solid ${colors.primary}` }}
+    >
+      <h3 style={{ ...t.titleLarge }}>{step.title}</h3>
+      <p style={{ ...t.onSurfaceVariant.bodyMedium }}>{step.description}</p>
       <div className="flex justify-center items-center space-x-4 mt-3">
         <button
           onClick={onPrev}
-          className="text-gray-600 font-semibold hover:text-black transition-colors"
-          style={{ visibility: currentStep === 0 ? 'hidden' : 'visible' }}
+          style={{ ...t.labelLarge, color: colors.onSurfaceVariant, visibility: currentStep === 0 ? 'hidden' : 'visible' }}
           aria-label="Go to previous step"
         >
           &larr; Previous

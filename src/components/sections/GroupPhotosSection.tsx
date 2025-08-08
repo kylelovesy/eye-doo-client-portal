@@ -1,11 +1,14 @@
 'use client';
 
+import { SvgIcon } from '@/components/ui/Icon';
+import { GENERIC_GROUP_ICON, getGroupCategoryIconSrc } from '@/lib/groupIconMaps';
+import { DEFAULT_GROUP_SHOT_CATEGORIES } from '@/lib/groupShotMasterData';
+import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import { GroupShot, PersonWithRole } from '@/types';
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { GroupShot, PersonWithRole } from '@/types';
-import { DEFAULT_GROUP_SHOT_CATEGORIES } from '@/lib/groupShotMasterData';
 
 interface GroupPhotosSectionProps {
   customGroups: GroupShot[];
@@ -16,8 +19,10 @@ interface GroupPhotosSectionProps {
 
 export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onAddSuggestedGroup }: GroupPhotosSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
-  const suggestedGroups = DEFAULT_GROUP_SHOT_CATEGORIES.flatMap(cat => cat.items);
+  const categories = DEFAULT_GROUP_SHOT_CATEGORIES;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,24 +43,19 @@ export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onA
   return (
     <section aria-labelledby="group-photos-heading">
       <div className="text-center mb-6">
-        <h2 id="group-photos-heading" className="text-2xl font-bold text-gray-800">Requested Group Photos</h2>
-        <p className="mt-2 text-gray-600 max-w-2xl mx-auto">Here are some common group photos. Click &quot;Add to my list&quot; to use them, or create your own custom groups below.</p>
+        <h2 id="group-photos-heading" style={t.titleLarge}>Requested Group Photos</h2>
+        <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
+          Here are some common group photos. Click "Add to my list" to use them, or create your own custom groups below.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-4xl mx-auto">
-        {suggestedGroups.map(sg => (
-          <div key={sg.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-            <div>
-              <p className="font-bold text-gray-700">{sg.name}</p>
-              <p className="text-sm text-gray-500">{sg.notes}</p>
+        {categories.map(cat => (
+          <div key={cat.id} className="rounded-lg shadow p-4" style={{ backgroundColor: colors.surface }}>
+            <div className="flex items-center gap-3">
+              <SvgIcon src={getGroupCategoryIconSrc(cat.id as any)} size={22} color={colors.primary} title={cat.displayName} />
+              <h4 style={t.titleMedium}>{cat.displayName}</h4>
             </div>
-            <button
-              onClick={() => onAddSuggestedGroup(sg)}
-              className="bg-green-100 text-green-800 text-sm font-bold py-1 px-3 rounded-full hover:bg-green-200 shrink-0 ml-4"
-              aria-label={`Add suggested group: ${sg.name}`}
-            >
-              Add
-            </button>
           </div>
         ))}
       </div>
@@ -63,20 +63,27 @@ export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onA
       <hr className="my-8 border-gray-300" />
 
       <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-gray-700">Your Custom Group List</h3>
+        <h3 style={t.titleMedium}>Your Custom Group List (Others)</h3>
         <Button onClick={() => setIsModalOpen(true)} className="mt-2">Create Custom Group</Button>
       </div>
 
       <div className="space-y-4 max-w-3xl mx-auto">
         {customGroups && customGroups.length > 0 ? (
           customGroups.map(group => (
-            <div key={group.id} className="bg-white rounded-lg shadow-md p-5">
-              <h4 className="text-xl font-bold text-gray-800 mb-2">{group.name}</h4>
+            <div key={group.id} className="rounded-lg shadow-md p-5" style={{ backgroundColor: colors.surface }}>
+              <div className="flex items-center gap-3 mb-2">
+                <SvgIcon src={GENERIC_GROUP_ICON} size={22} color={colors.primary} title={group.name} />
+                <h4 style={t.titleMedium}>{group.name}</h4>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {group.peopleIds.map(personId => {
                   const person = people.find(p => p.id === personId);
                   return person ? (
-                    <span key={personId} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700">
+                    <span
+                      key={personId}
+                      className="inline-block rounded-full px-3 py-1 text-sm font-semibold"
+                      style={{ backgroundColor: colors.surfaceVariant, color: colors.onSurface }}
+                    >
                       {person.fullName}
                     </span>
                   ) : null;
