@@ -192,7 +192,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const value = useMemo(() => (isDark ? AppDarkTheme : AppLightTheme), [isDark]);
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+return (
+  <ThemeContext.Provider value={value}>
+    {children}
+  </ThemeContext.Provider>
+);
 };
 
 export const useAppTheme = () => useContext(ThemeContext);
