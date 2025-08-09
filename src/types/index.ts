@@ -10,6 +10,7 @@ export enum LocationType {
     PHOTO_LOCATION = 'Photo Location',
     ACCOMMODATION = 'Accommodation',
     OTHER = 'Other',
+SINGLE_LOCATION = 'Single Location',
 }
 
 export enum RelationshipToCouple {
