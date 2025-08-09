@@ -13,6 +13,7 @@ const locationTypeToIcon: Record<LocationType, string> = {
   [LocationType.PHOTO_LOCATION]: `${ICON_BASE}/camera.svg`,
   [LocationType.ACCOMMODATION]: `${ICON_BASE}/accommodation.svg`,
   [LocationType.OTHER]: `${ICON_BASE}/detailscat.svg`,
+  [LocationType.SINGLE_LOCATION]: `${ICON_BASE}/ceremony.svg`,
 };
 
 const eventTypeToIcon: Record<TimelineEventType, string> = {
