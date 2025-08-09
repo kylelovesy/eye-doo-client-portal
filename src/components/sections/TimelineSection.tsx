@@ -42,7 +42,7 @@ export const TimelineSection = ({ events, onAddEvent }: TimelineSectionProps) =>
       <div className="text-center mb-6">
         <h2 id="timeline-heading" style={t.titleLarge}>Key Events Timeline</h2>
         <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
-          Provide the main "tentpole" events of your day. Your photographer will use this to build a detailed final schedule.
+          Provide the main &quot;tentpole&quot; events of your day. Your photographer will use this to build a detailed final schedule.
         </p>
         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Event</Button>
       </div>

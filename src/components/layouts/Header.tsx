@@ -1,4 +1,4 @@
-import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import { useTypography } from '@/lib/useAppStyle';
 
 interface HeaderProps {
   projectName: string;
@@ -7,7 +7,6 @@ interface HeaderProps {
 
 export const Header = ({ projectName, photographerName }: HeaderProps) => {
   const t = useTypography();
-  const colors = useAppThemeColors();
 
   return (
     <header className="text-center mb-6">

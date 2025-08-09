@@ -1,7 +1,7 @@
 'use client';
 
 import { SvgIcon } from '@/components/ui/Icon';
-import { GENERIC_GROUP_ICON, getGroupCategoryIconSrc } from '@/lib/groupIconMaps';
+import { GENERIC_GROUP_ICON, getGroupCategoryIconSrc, GroupCategoryId } from '@/lib/groupIconMaps';
 import { DEFAULT_GROUP_SHOT_CATEGORIES } from '@/lib/groupShotMasterData';
 import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
 import { GroupShot, PersonWithRole } from '@/types';
@@ -17,7 +17,7 @@ interface GroupPhotosSectionProps {
   onAddSuggestedGroup: (group: { id: string; name: string; notes?: string }) => void;
 }
 
-export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onAddSuggestedGroup }: GroupPhotosSectionProps) => {
+export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onAddSuggestedGroup: _onAddSuggestedGroup }: GroupPhotosSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const colors = useAppThemeColors();
   const t = useTypography();
@@ -45,7 +45,7 @@ export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onA
       <div className="text-center mb-6">
         <h2 id="group-photos-heading" style={t.titleLarge}>Requested Group Photos</h2>
         <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
-          Here are some common group photos. Click "Add to my list" to use them, or create your own custom groups below.
+          Here are some common group photos. Click &quot;Add to my list&quot; to use them, or create your own custom groups below.
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export const GroupPhotosSection = ({ customGroups, people, onAddCustomGroup, onA
         {categories.map(cat => (
           <div key={cat.id} className="rounded-lg shadow p-4" style={{ backgroundColor: colors.surface }}>
             <div className="flex items-center gap-3">
-              <SvgIcon src={getGroupCategoryIconSrc(cat.id as any)} size={22} color={colors.primary} title={cat.displayName} />
+              <SvgIcon src={getGroupCategoryIconSrc(cat.id as GroupCategoryId)} size={22} color={colors.primary} title={cat.displayName} />
               <h4 style={t.titleMedium}>{cat.displayName}</h4>
             </div>
           </div>
