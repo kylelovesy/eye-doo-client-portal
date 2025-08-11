@@ -166,7 +166,12 @@ function PortalPageContent() {
           <KeyPeopleSection config={keyPeopleData.config} items={keyPeopleData.items} onAddPerson={handleAddPerson} />
         )}
         {activeSection === 'locations' && locationData && (
-          <LocationsSection config={locationData.config} items={locationData.items} onAddLocation={handleAddLocation} />
+          <LocationsSection
+            config={locationData.config}
+            items={locationData.items}
+            onAddLocation={handleAddLocation}
+            onSetMultipleLocations={(multiple) => projectService.setMultipleLocations(projectId, multiple)}
+          />
         )}
         {activeSection === 'groups' && groupShotData && (
           <GroupShotsSection

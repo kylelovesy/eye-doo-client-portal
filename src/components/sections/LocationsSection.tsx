@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { SvgIcon } from '@/components/ui/Icon';
@@ -12,12 +12,32 @@ interface LocationsSectionProps {
   config: LocationConfig;
   items: ClientLocationFull[];
   onAddLocation: (location: Omit<ClientLocationFull, 'id'>) => void;
+  onSetMultipleLocations: (multiple: boolean) => void;
 }
 
-export const LocationsSection = ({ config, items, onAddLocation }: LocationsSectionProps) => {
+export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLocations }: LocationsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<LocationType>(LocationType.SINGLE_LOCATION);
+  // Inline single-location form state
+  const [singleForm, setSingleForm] = useState({
+    locationName: '',
+    locationAddress1: '',
+    locationAddress2: '',
+    locationPostcode: '',
+    locationNotes: '',
+  });
   const colors = useAppThemeColors();
   const t = useTypography();
+
+  const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
+  const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
+  const isSingleFormValid = useMemo(() => {
+    return (
+      singleForm.locationName.trim().length > 0 &&
+      singleForm.locationAddress1.trim().length > 0 &&
+      singleForm.locationPostcode.trim().length > 0
+    );
+  }, [singleForm]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,14 +52,28 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
       locationAddress2: formData.get('locationAddress2') as string,
       locationPostcode: formData.get('locationPostcode') as string,
       locationNotes: formData.get('locationNotes') as string,
-      arriveTime: formData.get('arriveTime') as string,
-      leaveTime: formData.get('leaveTime') as string,
+      arriveTime: (formData.get('arriveTime') as string) || undefined,
+      leaveTime: (formData.get('leaveTime') as string) || undefined,
       nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
-      nextLocationTravelArrangements: formData.get('travelArrangements') as string || undefined,
+      nextLocationTravelArrangements: (formData.get('travelArrangements') as string) || undefined,
     };
 
     onAddLocation(newLocation);
     setIsModalOpen(false);
+  };
+
+  const handleInlineSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSingleFormValid) return;
+    const newLocation: Omit<ClientLocationFull, 'id'> = {
+      locationName: singleForm.locationName.trim(),
+      locationType: LocationType.SINGLE_LOCATION,
+      locationAddress1: singleForm.locationAddress1.trim(),
+      locationAddress2: singleForm.locationAddress2.trim() || undefined,
+      locationPostcode: singleForm.locationPostcode.trim(),
+      locationNotes: singleForm.locationNotes.trim() || undefined,
+    };
+    onAddLocation(newLocation);
   };
 
   return (
@@ -50,16 +84,65 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
           Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.
         </p>
         
-        {/* Show a finalized message or the add button */}
+        {/* Finalized state */}
         {config.finalized ? (
           <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-md mx-auto">
             <p className="font-semibold">This section has been finalized by your photographer and can no longer be edited.</p>
           </div>
         ) : (
-          <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
+          <>
+            {/* Multiple Locations toggle when allowed */}
+            {showMultipleToggle && (
+              <div className="mt-3 flex justify-center">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox"
+                    checked={false}
+                    onChange={(e) => onSetMultipleLocations(e.target.checked)}
+                  />
+                  <span>Multiple Locations</span>
+                </label>
+              </div>
+            )}
+
+            {/* Add button only when multiple locations workflow */}
+            {config.multipleLocations && (
+              <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
+            )}
+          </>
         )}
       </div>
       
+      {/* Inline single-location form when multipleLocations=false and none exist */}
+      {showInlineSingleForm && !config.finalized && (
+        <form onSubmit={handleInlineSubmit} className="max-w-3xl mx-auto space-y-4">
+          <div>
+            <label htmlFor="single_locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
+            <input id="single_locationName" className="form-input" value={singleForm.locationName} onChange={(e) => setSingleForm({ ...singleForm, locationName: e.target.value })} placeholder="e.g., Manor House" />
+          </div>
+          <div>
+            <label htmlFor="single_address1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
+            <input id="single_address1" className="form-input" value={singleForm.locationAddress1} onChange={(e) => setSingleForm({ ...singleForm, locationAddress1: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="single_address2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
+            <input id="single_address2" className="form-input" value={singleForm.locationAddress2} onChange={(e) => setSingleForm({ ...singleForm, locationAddress2: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="single_postcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
+            <input id="single_postcode" className="form-input" value={singleForm.locationPostcode} onChange={(e) => setSingleForm({ ...singleForm, locationPostcode: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="single_notes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+            <textarea id="single_notes" className="form-textarea" rows={2} placeholder="e.g., Parking is at the rear of the building" value={singleForm.locationNotes} onChange={(e) => setSingleForm({ ...singleForm, locationNotes: e.target.value })} />
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={!isSingleFormValid}>Save Location</Button>
+          </div>
+        </form>
+      )}
+
       <div className="space-y-4 max-w-3xl mx-auto">
         {items && items.length > 0 ? (
           items.map(loc => (
@@ -113,11 +196,14 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
           {config.multipleLocations && (
             <div className="mb-4">
               <label htmlFor="locationType" className="block text-sm font-medium text-gray-700">Location Type</label>
-              <select id="locationType" name="locationType" required className="form-select">
-                {Object.values(LocationType).filter(t => t !== LocationType.SINGLE_LOCATION).map(type => 
-                  <option key={type} value={type}>{type}</option>
-                )}
-              </select>
+              <div className="flex items-center gap-2">
+                <SvgIcon src={getLocationIconSrc(selectedType)} size={20} title={selectedType} />
+                <select id="locationType" name="locationType" required className="form-select" onChange={(e)=>setSelectedType(e.target.value as LocationType)}>
+                  {Object.values(LocationType).filter(t => t !== LocationType.SINGLE_LOCATION).map(type => 
+                    <option key={type} value={type}>{type}</option>
+                  )}
+                </select>
+              </div>
             </div>
           )}
 

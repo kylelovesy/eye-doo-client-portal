@@ -38,11 +38,11 @@ export const KeyPeopleSection = ({ config, items, onAddPerson }: KeyPeopleSectio
   };
 
   // Helper to create styled tags for person attributes
-  const renderTag = (label: string, key: string) => (
-    <p key={key} className="p-2 rounded-md" style={{ ...t.onSurfaceVariant.bodySmall, backgroundColor: colors.surfaceVariant }}>
-      {label}
-    </p>
-  );
+  // const renderTag = (label: string, key: string) => (
+  //   <p key={key} className="p-2 rounded-md" style={{ ...t.onSurfaceVariant.bodySmall, backgroundColor: colors.surfaceVariant }}>
+  //     {label}
+  //   </p>
+  // );
 
   return (
     <section aria-labelledby="key-people-heading">
@@ -65,16 +65,17 @@ export const KeyPeopleSection = ({ config, items, onAddPerson }: KeyPeopleSectio
         {items && items.length > 0 ? (
           items.map(person => (
             <div key={person.id} className="rounded-md shadow-lg p-5 text-center" style={{ backgroundColor: colors.surface }}>             
-              <h3 style={t.titleMedium}>{person.fullName}</h3>
               <p style={{ ...t.primary.bodyLarge, fontWeight: 600 }}>{person.role}</p>
+              <h3 style={t.titleMedium}>{person.fullName}</h3>
               
-              <div className="flex flex-wrap justify-center gap-2 mt-3">
+              
+              {/* <div className="flex flex-wrap justify-center gap-2 mt-3">
                   {person.isVIP && renderTag('VIP', 'vip')}
                   {person.canRallyPeople && renderTag('Can Rally People', 'rally')}
                   {person.mustPhotograph && renderTag('Must Photograph', 'must')}
                   {person.dontPhotograph && renderTag("Don't Photograph", 'dont')}
                   {person.involvedIn && person.involvedIn.map(action => renderTag(action.type, action.type))}
-              </div>
+              </div> */}
 
               {person.notes && (
                 <p className="mt-4 p-2 rounded-md" style={{ ...t.onSurfaceVariant.bodySmall, backgroundColor: colors.surfaceVariant }}>

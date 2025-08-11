@@ -26,8 +26,8 @@ export const createTypography = () => ({
   headlineSmall: { fontFamily: SerifConfig.medium, fontSize: 24, lineHeight: '32px', letterSpacing: 0 },
 
   titleLarge: { fontFamily: SerifConfig.bold, fontSize: 22, lineHeight: '28px', letterSpacing: 0 },
-  titleMedium: { fontFamily: SansConfig.semiBold, fontSize: 16, lineHeight: '24px', letterSpacing: 0.15 },
-  titleSmall: { fontFamily: SansConfig.medium, fontSize: 14, lineHeight: '20px', letterSpacing: 0.1 },
+  titleMedium: { fontFamily: SerifConfig.medium, fontSize: 16, lineHeight: '22px', letterSpacing: 0.15 },
+  titleSmall: { fontFamily: SerifConfig.medium, fontSize: 14, lineHeight: '18px', letterSpacing: 0.1 },
 
   bodyBold: { fontFamily: SansConfig.semiBold, fontSize: 16, lineHeight: '24px', letterSpacing: 0.15 },
   bodyLarge: { fontFamily: SansConfig.regular, fontSize: 16, lineHeight: '24px', letterSpacing: 0.15 },
