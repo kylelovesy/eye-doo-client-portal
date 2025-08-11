@@ -10,8 +10,7 @@ export enum LocationType {
     RECEPTION = 'Reception',
     PHOTO_LOCATION = 'Photo Location',
     ACCOMMODATION = 'Accommodation',
-    OTHER = 'Other',
-SINGLE_LOCATION = 'Single Location',
+    OTHER = 'Other'
 }
 export enum KeyPersonRole {
     MAID_OF_HONOR = 'Maid of Honor',
