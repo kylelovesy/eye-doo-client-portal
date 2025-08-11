@@ -1,0 +1,169 @@
+{
+  "projects": {
+    "6e62DDPB7D24DHwAvbAq": {
+      "createdAt": "9 August 2025 at 14:11:29 UTC+1",
+      "lastUpdated": "9 August 2025 at 14:42:39 UTC+1",
+      "photographerName": "Kyle",
+      "portalStatus": 5,
+      "currentStep": 5,
+      "groupShots": [
+        {
+          "id": "group_34a4c73f-8f12-4f4c-b04c-d0122261e736",
+          "name": "Ducks",
+          "notes": "",
+          "peopleIds": []
+        },
+        {
+          "id": "group_39fc2de8-838f-4242-a94a-b4f0528eefa2a",
+          "name": "Duck 2",
+          "notes": "",
+          "peopleIds": [
+            "person_70f9531d-e1ce-49d9-957b-0c2d2f669a2e",
+            "person_11a4663f-4442-45ca-a813-e239e9e9e172"
+          ]
+        }
+      ],
+      "locationInfo": [
+        {
+          "id": "location_cb611ae-2e49-4ed2-9f05-ff973a9224ff",
+          "locationAddress": "Disney Land Florida",
+          "locationName": "Princess Castle",
+          "locationType": "Ceremony"
+        },
+        {
+          "id": "location_52cefe77-d96a-41ca-b46b-f8102ecb8b3b",
+          "locationAddress": "Clubhouse",
+          "locationName": "Mickey Club House",
+          "locationType": "Getting Ready 1"
+        }
+      ],
+      "events": [
+        {
+          "id": "event_b800e7c7-1307-4db2-b31e-eb01f501b576",
+          "name": "Ceremony",
+          "notes": "Castle",
+          "time": "14:45",
+          "type": "Ceremony Begins"
+        },
+        {
+          "id": "event_922ce6c6-7734-44bc-a4db-8a6d845e023",
+          "name": "Speeches",
+          "notes": "Clubhouse",
+          "time": "16:00",
+          "type": "Speeches"
+        }
+      ],
+      "projectInfo": {
+        "projectName": "Disney Fairytale",
+        "projectStatus": "Draft",
+        "eventDate": "14 August 2025 at 00:00:00 UTC+1",
+        "personA": {
+          "firstName": "Mickey",
+          "surname": "Mouse"
+        },
+        "personB": {
+          "firstName": "Minnie",
+          "surname": "Mouse"
+        },
+        "location": {
+          "locationAddress": "Disney Land",
+          "locationPostcode": ""
+        },
+        "contact": {
+          "primaryEmail": "mickey@disney.com",
+          "primaryPhone": "077333377667"
+        },
+        "weddingParty": [
+          {
+            "id": "person_70f9531d-e1ce-49d9-957b-0c2d2f669a2e",
+            "fullName": "Donald Duck",
+            "role": "Best Man",
+            "relationship": "Grooms Friends",
+            "notes": "Speech 1"
+          },
+          {
+            "id": "person_11a4663f-4442-45ca-a813-e239e9e9e172",
+            "fullName": "Daisy Duck",
+            "role": "Maid of Honour",
+            "relationship": "Brides Friends",
+            "notes": ""
+          }
+        ],
+        "photoRequests": [
+          {
+            "id": "request_a6574f0b-8334-40e0-a0e2-2db57293e1b5",
+            "request": "A photo of the ducks on a pond",
+            "imageId": "https://firebasestorage.googleapis.com/v0/b/client-portal-vercel.appspot.com/o/6e62DDPB7D24DHwAvbAq%2Fimage-b3300e4e-3c3f-4fac-ae3e-5e558b9e5e9e?alt=media&token=c2cd60eb-5c74-42f0-94e8-dd43f9a74288"
+          }
+        ]
+      },
+      "userLists": {
+        "coupleShotListCategories": {
+          "list": [
+            { "id": "couple_shot_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "couple_shot_cat_getting_ready", "displayName": "Getting Ready", "isPredefined": true }
+          ]
+        },
+        "groupShotListCategories": {
+          "list": [
+            { "id": "group_shot_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "group_shot_cat_family", "displayName": "Family", "isPredefined": true }
+          ]
+        },
+        "kitCategories": {
+          "list": [
+            { "id": "kit_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "kit_cat_camera_bodies", "displayName": "Camera Bodies", "isPredefined": true }
+          ]
+        },
+        "tasksCategories": {
+          "list": [
+            { "id": "task_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "task_cat_week_before", "displayName": "Week Before", "isPredefined": true }
+          ]
+        }
+      },
+      "coupleShotUserList": {
+        "csc01": {
+          "id": "csc01",
+          "categoryID": "couple_shot_cat_ceremony",
+          "name": "Giving away",
+          "notes": "Capture the handoff moment during the ceremony",
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "groupShotUserList": {
+        "gsfa01": {
+          "id": "gsfa01",
+          "categoryID": "group_shot_cat_family",
+          "name": "P1 parents",
+          "notes": "Couple posed with Partner 1s parents",
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "kitUserList": {
+        "kitbag01": {
+          "id": "kitbag01",
+          "categoryID": "kit_cat_bags",
+          "name": "Main Camera Bag (Roller or Backpack)",
+          "notes": "",
+          "quantity": 1,
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "taskUserList": {
+        "tswk01": {
+          "id": "tswk01",
+          "categoryID": "task_cat_week_before",
+          "name": "Confirm timeline",
+          "notes": "Double-check details with couple and all vendors",
+          "checked": false,
+          "isPredefined": true
+        }
+      }
+    }
+  }
+}

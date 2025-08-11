@@ -1,0 +1,178 @@
+{
+  "projects": {
+    "6e62DDPB7D24DHwAvbAq": {
+      "createdAt": "9 August 2025 at 14:11:29 UTC+1",
+      "updatedAt": "9 August 2025 at 14:11:29 UTC+1",
+      "userID": "pmvgSN4IZewcZmxAJibbvrFUGO3",
+      "members": [
+        "pmvgSN4IZewcZmxAJibbvrFUGO3"
+      ],
+      "photographerName": "Kyle",
+      "projectInfo": {
+        "projectName": "Disney Fairytale",
+        "projectStatus": "Draft",
+        "eventDate": "14 August 2025 at 00:00:00 UTC+1",
+        "personA": {
+          "firstName": "Mickey",
+          "surname": "Mouse"
+        },
+        "personB": {
+          "firstName": "Minnie",
+          "surname": "Mouse"
+        },
+        "location": {
+          "locationAddress": "Disney Land",
+          "locationPostcode": ""
+        },
+        "contact": {
+          "primaryEmail": "mickey@disney.com",
+          "primaryPhone": "077333377667"
+        }
+      },
+      "userLists": {
+        "coupleShotListCategories": {
+          "list": [
+            { "id": "couple_shot_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "couple_shot_cat_getting_ready", "displayName": "Getting Ready", "isPredefined": true },
+            { "id": "couple_shot_cat_first_look", "displayName": "First Look", "isPredefined": true },
+            { "id": "couple_shot_cat_portraits", "displayName": "Couple Portraits", "isPredefined": true },
+            { "id": "couple_shot_cat_ceremony", "displayName": "Ceremony", "isPredefined": true },
+            { "id": "couple_shot_cat_golden_hour", "displayName": "Golden Hour / Sunset", "isPredefined": true },
+            { "id": "couple_shot_cat_reception", "displayName": "Reception", "isPredefined": true }
+          ]
+        },
+        "groupShotListCategories": {
+          "list": [
+            { "id": "group_shot_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "group_shot_cat_family", "displayName": "Family", "isPredefined": true },
+            { "id": "group_shot_cat_wedding_party", "displayName": "Wedding Party", "isPredefined": true },
+            { "id": "group_shot_cat_extended_family", "displayName": "Extended Family", "isPredefined": true },
+            { "id": "group_shot_cat_friends", "displayName": "Friends", "isPredefined": true },
+            { "id": "group_shot_cat_others", "displayName": "Others", "isPredefined": true },
+            { "id": "group_shot_cat_fun", "displayName": "Fun", "isPredefined": true }
+          ]
+        },
+        "kitCategories": {
+          "list": [
+            { "id": "kit_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "kit_cat_camera_bodies", "displayName": "Camera Bodies", "isPredefined": true },
+            { "id": "kit_cat_lenses", "displayName": "Lenses", "isPredefined": true },
+            { "id": "kit_cat_lighting", "displayName": "Lighting", "isPredefined": true },
+            { "id": "kit_cat_power", "displayName": "Power", "isPredefined": true },
+            { "id": "kit_cat_media", "displayName": "Memory Cards", "isPredefined": true },
+            { "id": "kit_cat_support", "displayName": "Support Gear", "isPredefined": true },
+            { "id": "kit_cat_bags", "displayName": "Bags & Cases", "isPredefined": true },
+            { "id": "kit_cat_data_management", "displayName": "Data Management", "isPredefined": true }
+          ]
+        },
+        "tasksCategories": {
+          "list": [
+            { "id": "task_cat_user", "displayName": "Custom", "isPredefined": true },
+            { "id": "task_cat_week_before", "displayName": "Week Before", "isPredefined": true },
+            { "id": "task_cat_night_before", "displayName": "Night Before", "isPredefined": true },
+            { "id": "task_cat_morning_of", "displayName": "Morning Of", "isPredefined": true },
+            { "id": "task_cat_after_wedding", "displayName": "After Wedding", "isPredefined": true }
+          ]
+        }
+      },
+      "coupleShotUserList": {
+        "csc01": {
+          "id": "csc01",
+          "categoryID": "couple_shot_cat_ceremony",
+          "name": "Giving away",
+          "notes": "Capture the handoff moment during the ceremony",
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "groupShotUserList": {
+        "gsfa01": {
+          "id": "gsfa01",
+          "categoryID": "group_shot_cat_family",
+          "name": "P1 parents",
+          "notes": "Couple posed with Partner 1s parents",
+          "checked": false,
+          "isPredefined": true
+        },
+        "gsfr01": {
+          "id": "gsfr01",
+          "categoryID": "group_shot_cat_friends",
+          "name": "Close friends",
+          "notes": "Couple posed with their closest friends",
+          "checked": false,
+          "isPredefined": true
+        },
+        "gsfu01": {
+          "id": "gsfu01",
+          "categoryID": "group_shot_cat_fun",
+          "name": "Party lifting couple",
+          "notes": "Wedding party lifting the couple joyfully",
+          "checked": false,
+          "isPredefined": true
+        },
+        "gso01": {
+          "id": "gso01",
+          "categoryID": "group_shot_cat_others",
+          "name": "Full guest group",
+          "notes": "Capture a wide shot with all wedding guests together",
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "kitUserList": {
+        "kitbag01": {
+          "id": "kitbag01",
+          "categoryID": "kit_cat_bags",
+          "name": "Main Camera Bag (Roller or Backpack)",
+          "notes": "",
+          "quantity": 1,
+          "checked": false,
+          "isPredefined": true
+        },
+        "kicam01": {
+          "id": "kicam01",
+          "categoryID": "kit_cat_camera_bodies",
+          "name": "Primary Camera Body",
+          "notes": "",
+          "quantity": 1,
+          "checked": false,
+          "isPredefined": true
+        }
+      },
+      "taskUserList": {
+        "tswk01": {
+          "id": "tswk01",
+          "categoryID": "task_cat_week_before",
+          "name": "Confirm timeline",
+          "notes": "Double-check details with couple and all vendors",
+          "checked": false,
+          "isPredefined": true
+        },
+        "tsnb01": {
+          "id": "tsnb01",
+          "categoryID": "task_cat_night_before",
+          "name": "Charge batteries",
+          "notes": "Include camera, flash, and trigger batteries",
+          "checked": false,
+          "isPredefined": true
+        },
+        "tsmo01": {
+          "id": "tsmo01",
+          "categoryID": "task_cat_morning_of",
+          "name": "Check weather/traffic",
+          "notes": "Review forecast and check live traffic updates",
+          "checked": false,
+          "isPredefined": true
+        },
+        "tsaw01": {
+          "id": "tsaw01",
+          "categoryID": "task_cat_after_wedding",
+          "name": "Backup cards",
+          "notes": "Immediately back up all memory cards (2-3 locations)",
+          "checked": false,
+          "isPredefined": true
+        }
+      }
+    }
+  }
+}

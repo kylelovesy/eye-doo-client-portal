@@ -1,7 +1,8 @@
-// This file consolidates the enums and types you provided for easy import.
+import { Timestamp } from "firebase/firestore";
 
-// --- From enum.ts ---
+// --- Enums needed by the Portal ---
 export enum LocationType {
+    SINGLE_LOCATION = 'Single Location', // New value for when multipleLocations is false
     MAIN_VENUE = 'Main Venue',
     CEREMONY = 'Ceremony',
     GETTING_READY_1 = 'Getting Ready 1',
@@ -12,17 +13,45 @@ export enum LocationType {
     OTHER = 'Other',
 SINGLE_LOCATION = 'Single Location',
 }
-
-export enum RelationshipToCouple {
-    BRIDE = 'Bride',
-    GROOM = 'Groom',
-    BRIDE_FAMILY = 'Brides Family',
-    GROOM_FAMILY = 'Grooms Family',
-    BRIDE_FRIENDS = 'Brides Friends',
-    GROOM_FRIENDS = 'Grooms Friends',
+export enum KeyPersonRole {
+    MAID_OF_HONOR = 'Maid of Honor',
+    MATRON_OF_HONOR = 'Matron of Honor',
+    BEST_MAN = 'Best Man',
+    BRIDESMAID = 'Bridesmaid',
+    GROOMSMAN = 'Groomsman',
+    JUNIOR_BRIDESMAID = 'Junior Bridesmaid',
+    JUNIOR_GROOMSMAN = 'Junior Groomsman',
+    FLOWER_GIRL = 'Flower Girl',
+    RING_BEARER = 'Ring Bearer',
+    USHER = 'Usher',
+    MOTHER_OF_BRIDE = 'Mother of the Bride',
+    FATHER_OF_BRIDE = 'Father of the Bride',
+    MOTHER_OF_GROOM = 'Mother of the Groom',
+    FATHER_OF_GROOM = 'Father of the Groom',
+    STEPMOTHER = 'Stepmother',
+    STEPFATHER = 'Stepfather',
+    GRANDMOTHER = 'Grandmother',
+    GRANDFATHER = 'Grandfather',
+    SISTER = 'Sister',
+    BROTHER = 'Brother',
+    OTHER = 'Other',
+}  
+export enum KeyPersonActions {
+    SPEECH = 'Speech',
+    READING = 'Reading',
+    TOAST = 'Toast',
+    WALK_DOWN_AISLE = 'Walk Down Aisle',
+    SPECIAL_DANCE = 'Special Dance',
     OTHER = 'Other',
 }
-
+export enum PhotoRequestType {
+    GROUP_SHOT = 'Group Shot',
+    INDIVIDUAL_SHOT = 'Individual Shot',
+    COUPLE_SHOT = 'Couple Shot',
+    CANDID_SHOT = 'Candid Shot',
+    DETAIL_SHOT = 'Detail Shot',
+    OTHER = 'Other',
+}
 export enum TimelineEventType {
     BRIDAL_PREP = 'Bridal Prep',
     GROOM_PREP = 'Groom Prep',
@@ -43,61 +72,132 @@ export enum TimelineEventType {
     OTHER = 'Other',
 }
 
-// --- Simplified types based on your project.ts for the portal ---
+// --- Interfaces for the 'locations' subcollection ---
+export interface LocationConfig {
+  multipleLocations: boolean;
+  finalized: boolean; // If true, the portal UI should disable editing.
+  photographerReviewed: boolean;
+}
 
-export interface PersonWithRole {
+export interface ClientLocationFull {
+  id: string; 
+  locationName: string;
+  locationType: LocationType;
+  locationAddress1: string;
+  locationAddress2?: string;
+  locationPostcode: string;
+  locationNotes?: string;
+  arriveTime?: string; 
+  leaveTime?: string;
+  nextLocationTravelTimeEstimate?: number;
+  nextLocationTravelArrangements?: string;
+}
+
+export interface PortalLocationData {
+  config: LocationConfig;
+  items: ClientLocationFull[];
+}
+
+// --- Interfaces for the 'keyPeople' subcollection ---
+export interface KeyPeopleConfig {
+  finalized: boolean;
+  photographerReviewed?: boolean;
+  familySituationsNotes?: string;
+  guestsToAvoidNotes?: string;
+  surprisesNotes?: string;
+}
+export interface InvolvedInAction {
+    type: KeyPersonActions;
+    timelineEventId?: string; // The client might not link it to a specific event
+}
+export interface ClientKeyPersonFull {
   id: string;
   fullName: string;
-  role: string;
-  relationship: RelationshipToCouple;
+  role: KeyPersonRole;
   notes?: string;
+  isVIP?: boolean;
+  canRallyPeople?: boolean;
+  mustPhotograph?: boolean;
+  dontPhotograph?: boolean;
+  involvedIn?: InvolvedInAction[];
+}
+export interface PortalKeyPeopleData {
+    config: KeyPeopleConfig;
+    items: ClientKeyPersonFull[];
 }
 
-export interface LocationFull {
-  id:string;
-  locationType: LocationType;
-  locationName: string;
-  locationAddress1: string;
+// --- Interfaces for the 'photoRequests' subcollection ---
+export interface PhotoRequestConfig {
+    finalized: boolean;
+    photographerReviewed?: boolean;    
 }
-
-export interface GroupShot {
+export interface ClientPhotoRequestItemFull {
     id: string;
-    name: string;
-    notes?: string;
-    peopleIds: string[]; // This would store IDs of people from the PersonWithRole array
-}
-
-export interface PhotoRequest {
-    id: string;
-    request: string;
+    description: string;
     imageUrl?: string;
+    type: PhotoRequestType;
+    priority: 'Must Have' | 'Nice to Have';
+    // Photographer-specific fields like 'status' and 'photographerNotes' are omitted.
+    // 'linkedPeopleIds' is also omitted for portal simplicity; the client can use the
+    // description field to mention who is in the shot.
+}
+export interface PortalPhotoRequestData {
+    config: PhotoRequestConfig;
+    items: ClientPhotoRequestItemFull[];
 }
 
-export interface TimelineEvent {
-    id: string;
-    name: string;
-    time: string; // Storing as string for simplicity in the portal UI
-    type: TimelineEventType;
-    notes?: string;
+// --- Interfaces for the 'groupShots' subcollection ---
+export interface GroupShotConfig {
+    finalized: boolean;
+    totalTimeEstimated: number;
+}  
+export interface ClientGroupShotItemFull {
+id: string;
+name: string;
+categoryId: string;
+notes?: string;
+time: number;
+checked: boolean;
+}
+export interface ClientGroupShotCategory {
+id: string;
+displayName: string;
+iconName?: string; // We can use this to render the correct SVG icon
+}
+export interface PortalGroupShotData {
+config: GroupShotConfig;
+categories: ClientGroupShotCategory[];
+items: ClientGroupShotItemFull[];
+}
+// --- Interfaces for the 'timeline' subcollection ---
+export interface TimelineConfig {
+finalized: boolean;
+officialStartTime?: Date | Timestamp;
+officialEndTime?: Date | Timestamp;
 }
 
-// This represents the structure of the main project document we'll work with
+export interface ClientTimelineEventFull {
+id: string;
+title: string;
+type: TimelineEventType;
+startTime: Timestamp;
+duration: number;
+locationId?: string;
+linkedPeopleIds?: string[];
+clientNotes?: string;
+}
+
+export interface PortalTimelineData {
+config: TimelineConfig;
+items: ClientTimelineEventFull[];
+}
+
 export interface ProjectData {
     projectInfo: {
         projectName: string;
+        eventDate?: Date | Timestamp;
     };
     photographerName: string;
-    peopleInfo: {
-        weddingParty: PersonWithRole[];
-    };
-    locationInfo: LocationFull[];
-    groupShots: GroupShot[];
-    photoInfo: {
-        photoRequests: PhotoRequest[];
-    };
-    timeline: {
-        events: TimelineEvent[];
-    };
     portalStatus?: {
         currentStep: number;
     };

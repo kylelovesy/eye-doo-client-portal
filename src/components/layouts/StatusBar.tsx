@@ -1,4 +1,5 @@
 import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
+import styles from '@/app/portal.module.css';
 import { Button } from '../ui/Button';
 
 interface StatusBarProps {
@@ -14,12 +15,12 @@ export const StatusBar = ({ currentStep, steps, onNext, onPrev }: StatusBarProps
   const t = useTypography();
 
   return (
-    <div
-      className="p-4 rounded-lg mb-8 text-center shadow"
-      style={{ backgroundColor: colors.surface, borderLeft: `4px solid ${colors.primary}` }}
-    >
+    <div className="p-4 rounded-lg mb-8 text-center shadow" style={{ backgroundColor: colors.surface }}>
       <h3 style={{ ...t.titleLarge }}>{step.title}</h3>
       <p style={{ ...t.onSurfaceVariant.bodyMedium }}>{step.description}</p>
+      <div className={styles.progressBar}>
+        <div className={styles.progressFill} style={{ width: `${Math.round(((currentStep + 1) / steps.length) * 100)}%` }} />
+      </div>
       <div className="flex justify-center items-center space-x-4 mt-3">
         <button
           onClick={onPrev}

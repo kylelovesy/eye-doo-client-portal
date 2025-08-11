@@ -1,0 +1,224 @@
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+@keyframes float {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+.portalBg {
+  background: linear-gradient(135deg, #4A90E2 0%, #667eea 50%, #764ba2 100%);
+  min-height: 100vh;
+  padding: var(--spacing-xl);
+  color: white;
+}
+
+.portalContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xxl);
+  align-items: start;
+}
+
+.stepCard {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--spacing-xxxl);
+  padding: var(--spacing-xxxl);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.stepCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f, #4ecdc4, #45b7d1, #667eea);
+  background-size: 300% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.stepCard:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.completed {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.final {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(69, 160, 73, 0.2));
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.stepNumber {
+  background: linear-gradient(135deg, var(--primary), #667eea);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  color: white;
+}
+
+.stepNumberCompleted {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.stepTitle {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  background: linear-gradient(135deg, #ffffff, #e0e7ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.stepSubtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.stepDescription {
+  opacity: 0.9;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xxl);
+  font-size: 16px;
+}
+
+.contentSection {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.progressBar {
+  background: rgba(255, 255, 255, 0.1);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.progressFill {
+  background: linear-gradient(90deg, var(--primary), #667eea);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xxl);
+}
+
+.button {
+  background: linear-gradient(135deg, var(--primary), #667eea);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xxl);
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.celebration {
+  font-size: 64px;
+  margin-bottom: var(--spacing-lg);
+  animation: bounce 2s infinite;
+}
+
+.finalMessage {
+  margin-top: var(--spacing-xxxl);
+  padding: var(--spacing-xxl);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.floatingHearts {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.heart {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.1);
+  font-size: 20px;
+  animation-name: float;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@media (max-width: 768px) {
+  .portalContainer { grid-template-columns: 1fr; gap: var(--spacing-lg); }
+  .stepCard { padding: var(--spacing-xxl); }
+  .stepTitle { font-size: 24px; }
+}
+
+
