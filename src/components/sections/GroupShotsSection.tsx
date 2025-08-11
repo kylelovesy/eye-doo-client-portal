@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { SvgIcon } from '@/components/ui/Icon';
-import { getGroupCategoryIconSrc } from '@/lib/groupIconMaps';
+import { getGroupCategoryIconSrc, GroupCategoryId } from '@/lib/groupIconMaps';
 import { PortalGroupShotData, ClientGroupShotItemFull, ClientKeyPersonFull } from '@/types';
 
 interface GroupShotsSectionProps {
@@ -92,7 +92,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections, onAddCusto
               aria-expanded={openAccordion === category.id}
             >
               <div className="flex items-center gap-2">
-                <SvgIcon src={getGroupCategoryIconSrc(category.id as any)} size={20} title={category.displayName} />
+                <SvgIcon src={getGroupCategoryIconSrc(category.id as GroupCategoryId)} size={20} title={category.displayName} />
                 <h3 className="text-base font-semibold text-gray-800">{category.displayName}</h3>
               </div>
               <ChevronIcon open={openAccordion === category.id} />

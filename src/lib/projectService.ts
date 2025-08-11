@@ -32,12 +32,16 @@ import {
 } from '@/types';
 
 // Utility to strip undefined fields from payloads (Firestore forbids undefined)
-const stripUndefined = <T extends Record<string, any>>(obj: T): T => {
-  const cleaned: Record<string, any> = {};
-  Object.entries(obj).forEach(([key, value]) => {
-    if (value !== undefined) cleaned[key] = value;
+const stripUndefined = <T extends object>(obj: T): T => {
+  const cleaned = {} as T;
+  const source = obj as Record<string, unknown>;
+  Object.keys(source).forEach((key) => {
+    const value = source[key];
+    if (value !== undefined) {
+      (cleaned as Record<string, unknown>)[key] = value;
+    }
   });
-  return cleaned as T;
+  return cleaned;
 };
 
 export const projectService = {
@@ -99,12 +103,12 @@ export const projectService = {
     const locationWithId = stripUndefined({ ...newLocation, id: `loc_${Date.now()}` });
     try {
       await updateDoc(itemsRef, { list: arrayUnion(locationWithId) });
-    } catch (err) {
+    } catch {
       await setDoc(itemsRef, { list: [locationWithId] }, { merge: true });
     }
     try {
       await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
-    } catch (err) {
+    } catch {
       await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
     }
   },
@@ -132,12 +136,12 @@ export const projectService = {
     const personWithId = stripUndefined({ ...newPerson, id: `person_${Date.now()}` });
     try {
       await updateDoc(itemsRef, { list: arrayUnion(personWithId) });
-    } catch (err) {
+    } catch {
       await setDoc(itemsRef, { list: [personWithId] }, { merge: true });
     }
     try {
       await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
-    } catch (err) {
+    } catch {
       await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
     }
   },
@@ -165,12 +169,12 @@ export const projectService = {
     const requestWithId = stripUndefined({ ...newRequest, id: `request_${Date.now()}` });
     try {
       await updateDoc(itemsRef, { list: arrayUnion(requestWithId) });
-    } catch (err) {
+    } catch {
       await setDoc(itemsRef, { list: [requestWithId] }, { merge: true });
     }
     try {
       await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
-    } catch (err) {
+    } catch {
       await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
     }
   },
@@ -234,12 +238,12 @@ export const projectService = {
     const eventWithId = stripUndefined({ ...newEvent, id: `event_${Date.now()}` });
     try {
       await updateDoc(itemsRef, { list: arrayUnion(eventWithId) });
-    } catch (err) {
+    } catch {
       await setDoc(itemsRef, { list: [eventWithId] }, { merge: true });
     }
     try {
       await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
-    } catch (err) {
+    } catch {
       await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
     }
   },
