@@ -34,8 +34,10 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
   const colors = useAppThemeColors();
   const t = useTypography();
 
+  // const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
+  // const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
   const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
-  const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
+  const showMultipleToggle = true;
   const isSingleFormValid = useMemo(() => {
     return (
       singleForm.locationName.trim().length > 0 &&
