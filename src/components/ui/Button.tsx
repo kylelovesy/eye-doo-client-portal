@@ -19,7 +19,7 @@ export const Button = ({ children, variant = 'primary', style, ...props }: Butto
           color: colors.onPrimary,
           paddingBlock: spacing.sm,
           paddingInline: 24,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.sm,
           ...style,
         }
       : {
@@ -27,7 +27,7 @@ export const Button = ({ children, variant = 'primary', style, ...props }: Butto
           color: colors.onSurface,
           paddingBlock: spacing.sm,
           paddingInline: 24,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.sm,
           ...style,
         };
 

@@ -62,25 +62,25 @@ export type AppTheme = {
 };
 
 const lightThemeColors: ThemeColors = {
-  primary: "#6B8E23", // A more elegant, earthy green
+  primary: "#4A90E2",
   onPrimary: "#FFFFFF",
-  primaryContainer: "#E8F5E9",
-  onPrimaryContainer: "#1B5E20",
+  primaryContainer: "#D0E4FF",
+  onPrimaryContainer: "#001D36",
 
   secondary: "#D4A76A",
   onSecondary: "#FFFFFF",
   secondaryContainer: "#FFF2D1",
   onSecondaryContainer: "#3D2B00",
 
-  tertiary: "#A1887F", // A soft, warm grey
+  tertiary: "#6B8E23",
   onTertiary: "#FFFFFF",
-  tertiaryContainer: "#F5F5F5",
-  onTertiaryContainer: "#4E342E",
+  tertiaryContainer: "#D4E3FF",
+  onTertiaryContainer: "#222F00",
 
-  error: "#C62828",
+  error: "#C44536",
   onError: "#FFFFFF",
-  errorContainer: "#FFEBEE",
-  onErrorContainer: "#B71C1C",
+  errorContainer: "#FFDAD6",
+  onErrorContainer: "#410002",
 
   background: "#F5F5F5",
   onBackground: "#1A1A1A",
@@ -115,36 +115,36 @@ const lightThemeColors: ThemeColors = {
 };
 
 const darkThemeColors: ThemeColors = {
-  primary: "#A5D6A7", // A lighter green for dark mode
-  onPrimary: "#1B5E20",
-  primaryContainer: "#2E7D32",
-  onPrimaryContainer: "#E8F5E9",
+  primary: "#4A90E2",
+  onPrimary: "#003258",
+  primaryContainer: "#004F55",
+  onPrimaryContainer: "#A5EAF1",
 
   secondary: "#D4A76A",
   onSecondary: "#402D00",
   secondaryContainer: "#4A3A00",
   onSecondaryContainer: "#FFF2D1",
 
-  tertiary: "#BDBDBD", // A lighter grey for dark mode
-  onTertiary: "#4E342E",
-  tertiaryContainer: "#616161",
-  onTertiaryContainer: "#F5F5F5",
+  tertiary: "#9CCBFF",
+  onTertiary: "#003258",
+  tertiaryContainer: "#254766",
+  onTertiaryContainer: "#D4E3FF",
 
-  error: "#EF9A9A",
-  onError: "#B71C1C",
-  errorContainer: "#C62828",
-  onErrorContainer: "#FFEBEE",
+  error: "#FFB4AB",
+  onError: "#690005",
+  errorContainer: "#93000A",
+  onErrorContainer: "#FFDAD6",
 
-  background: "#121212",
+  background: "#1A1A1A",
   onBackground: "#E9ECEF",
 
-  surface: "#1E1E1E",
+  surface: "#1A1A1A",
   onSurface: "#E9ECEF",
-  surfaceVariant: "#424242",
-  onSurfaceVariant: "#BDBDBD",
+  surfaceVariant: "#41484D",
+  onSurfaceVariant: "#C1C8CE",
 
-  outline: "#9E9E9E",
-  outlineVariant: "#616161",
+  outline: "#8C959D",
+  outlineVariant: "#41484D",
 
   shadow: "#000000",
   scrim: "#000000",
@@ -164,7 +164,7 @@ const darkThemeColors: ThemeColors = {
 
   surfaceDisabled: "rgba(233, 236, 239, 0.12)",
   onSurfaceDisabled: "rgba(233, 236, 239, 0.38)",
-  backdrop: "rgba(0, 0, 0, 0.5)",
+  backdrop: "rgba(44, 49, 55, 0.4)",
 };
 
 

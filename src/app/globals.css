@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-    /* Your design system colors */
-    --primary: #6B8E23;
+    /* Theme colors (light) */
+    --primary: #4A90E2;
     --on-primary: #FFFFFF;
-    --primary-container: #E8F5E9;
-    --on-primary-container: #1B5E20;
+    --primary-container: #D0E4FF;
+    --on-primary-container: #001D36;
     --secondary: #D4A76A;
     --on-secondary: #FFFFFF;
     --secondary-container: #FFF2D1;
@@ -41,21 +41,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --primary: #A5D6A7;
-    --on-primary: #1B5E20;
-    --primary-container: #2E7D32;
-    --on-primary-container: #E8F5E9;
+    --primary: #4A90E2;
+    --on-primary: #003258;
+    --primary-container: #004F55;
+    --on-primary-container: #A5EAF1;
     --secondary: #D4A76A;
     --on-secondary: #402D00;
     --secondary-container: #4A3A00;
     --on-secondary-container: #FFF2D1;
-    --surface: #1E1E1E;
+    --surface: #1A1A1A;
     --on-surface: #E9ECEF;
-    --surface-variant: #424242;
-    --on-surface-variant: #BDBDBD;
-    --outline: #9E9E9E;
-    --outline-variant: #616161;
-    --background: #121212;
+    --surface-variant: #41484D;
+    --on-surface-variant: #C1C8CE;
+    --outline: #8C959D;
+    --outline-variant: #41484D;
+    --background: #1A1A1A;
     --foreground: #E9ECEF;
   }
 }
@@ -64,6 +64,47 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Form controls - consistent, higher contrast, tighter radius */
+:where(input[type="text"], input[type="number"], input[type="time"], input[type="email"], input[type="tel"], select, textarea).form-input,
+select.form-select,
+textarea.form-textarea {
+  width: 100%;
+  padding: 10px 12px; /* more comfortable */
+  border: 1px solid var(--outline);
+  border-radius: 8px; /* reduced radius */
+  background: var(--surface);
+  color: var(--on-surface);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--on-surface-variant);
+}
+
+input.form-input:focus,
+select.form-select:focus,
+textarea.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.25); /* olive green focus */
+}
+
+/* Checkbox/Radio - smaller radius, themed accent */
+input.form-checkbox,
+input.form-radio {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  border-radius: 4px;
+}
+
+/* Modal content spacing helper if needed later */
+.modal-content-tight {
+  padding: 20px;
+  border-radius: 10px;
 }
 /* @import "tailwindcss";
 

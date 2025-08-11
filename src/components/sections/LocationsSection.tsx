@@ -63,7 +63,7 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
       <div className="space-y-4 max-w-3xl mx-auto">
         {items && items.length > 0 ? (
           items.map(loc => (
-            <div key={loc.id} className="rounded-lg shadow-md p-5" style={{ backgroundColor: colors.surface }}>
+            <div key={loc.id} className="rounded-md shadow-md p-5" style={{ backgroundColor: colors.surface }}>
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <SvgIcon src={getLocationIconSrc(loc.locationType)} size={28} title={loc.locationType} />
@@ -109,36 +109,36 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Location">
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-            <input type="text" id="locationName" name="locationName" required placeholder="e.g., Manor House" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-          </div>
-          
-          {/* Conditionally render the Location Type dropdown */}
+          {/* Location Type first when multiple locations */}
           {config.multipleLocations && (
             <div className="mb-4">
               <label htmlFor="locationType" className="block text-sm font-medium text-gray-700">Location Type</label>
-              <select id="locationType" name="locationType" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
+              <select id="locationType" name="locationType" required className="form-select">
                 {Object.values(LocationType).filter(t => t !== LocationType.SINGLE_LOCATION).map(type => 
                   <option key={type} value={type}>{type}</option>
                 )}
               </select>
             </div>
           )}
+
+          <div className="mb-4">
+            <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
+            <input type="text" id="locationName" name="locationName" required placeholder="e.g., Manor House" className="form-input" />
+          </div>
           
           <div className="mb-4">
             <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
-            <input type="text" id="locationAddress1" name="locationAddress1" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+            <input type="text" id="locationAddress1" name="locationAddress1" required className="form-input" />
           </div>
           
           <div className="mb-4">
             <label htmlFor="locationAddress2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
-            <input type="text" id="locationAddress2" name="locationAddress2" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+            <input type="text" id="locationAddress2" name="locationAddress2" className="form-input" />
           </div>
           
           <div className="mb-4">
             <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
-            <input type="text" id="locationPostcode" name="locationPostcode" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+            <input type="text" id="locationPostcode" name="locationPostcode" required className="form-input" />
           </div>
           
           {/* Conditionally render Arrive/Leave times */}
@@ -146,11 +146,11 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label htmlFor="arriveTime" className="block text-sm font-medium text-gray-700">Arrive Time</label>
-                <input type="time" id="arriveTime" name="arriveTime" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+              <input type="time" id="arriveTime" name="arriveTime" className="form-input" />
               </div>
               <div>
                 <label htmlFor="leaveTime" className="block text-sm font-medium text-gray-700">Leave Time</label>
-                <input type="time" id="leaveTime" name="leaveTime" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+                <input type="time" id="leaveTime" name="leaveTime" className="form-input" />
               </div>
             </div>
           )}
@@ -159,20 +159,20 @@ export const LocationsSection = ({ config, items, onAddLocation }: LocationsSect
           {config.multipleLocations && (
             <>
               <hr className="my-4" />
-              <div className="mb-4">
+               <div className="mb-4">
                 <label htmlFor="travelTime" className="block text-sm font-medium text-gray-700">Travel Time to Next Location (minutes)</label>
-                <input type="number" id="travelTime" name="travelTime" placeholder="e.g., 25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+                <input type="number" id="travelTime" name="travelTime" min={0} step={5} placeholder="e.g., 25" className="form-input" />
               </div>
               <div className="mb-4">
                 <label htmlFor="travelArrangements" className="block text-sm font-medium text-gray-700">Travel Arrangements</label>
-                <textarea id="travelArrangements" name="travelArrangements" rows={2} placeholder="e.g., Guests will drive, couple has a limo" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
+                <textarea id="travelArrangements" name="travelArrangements" rows={2} placeholder="e.g., Guests will drive, couple has a limo" className="form-textarea"></textarea>
               </div>
             </>
           )}
           
           <div className="mb-4">
             <label htmlFor="locationNotes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
-            <textarea id="locationNotes" name="locationNotes" rows={2} placeholder="e.g., Parking is at the rear of the building" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
+            <textarea id="locationNotes" name="locationNotes" rows={2} placeholder="e.g., Parking is at the rear of the building" className="form-textarea"></textarea>
           </div>
           
           <div className="flex justify-end space-x-3 mt-6">

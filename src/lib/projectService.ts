@@ -8,6 +8,7 @@ import {
   arrayUnion,
   writeBatch,
   Unsubscribe,
+  setDoc,
 } from 'firebase/firestore';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth, db } from './firebase';
@@ -29,6 +30,15 @@ import {
   ClientTimelineEventFull,
   TimelineConfig,
 } from '@/types';
+
+// Utility to strip undefined fields from payloads (Firestore forbids undefined)
+const stripUndefined = <T extends Record<string, any>>(obj: T): T => {
+  const cleaned: Record<string, any> = {};
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value !== undefined) cleaned[key] = value;
+  });
+  return cleaned as T;
+};
 
 export const projectService = {
   // Authenticate via Cloud Function and fetch top-level project data
@@ -86,9 +96,17 @@ export const projectService = {
   addLocation: async (projectId: string, newLocation: Omit<ClientLocationFull, 'id'>): Promise<void> => {
     const itemsRef = doc(db, 'projects', projectId, 'locations', 'items');
     const configRef = doc(db, 'projects', projectId, 'locations', 'config');
-    const locationWithId = { ...newLocation, id: `loc_${Date.now()}` };
-    await updateDoc(itemsRef, { list: arrayUnion(locationWithId) });
-    await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    const locationWithId = stripUndefined({ ...newLocation, id: `loc_${Date.now()}` });
+    try {
+      await updateDoc(itemsRef, { list: arrayUnion(locationWithId) });
+    } catch (err) {
+      await setDoc(itemsRef, { list: [locationWithId] }, { merge: true });
+    }
+    try {
+      await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    } catch (err) {
+      await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
+    }
   },
 
   // Key People
@@ -111,9 +129,17 @@ export const projectService = {
   addKeyPerson: async (projectId: string, newPerson: Omit<ClientKeyPersonFull, 'id'>): Promise<void> => {
     const itemsRef = doc(db, 'projects', projectId, 'keyPeople', 'items');
     const configRef = doc(db, 'projects', projectId, 'keyPeople', 'config');
-    const personWithId = { ...newPerson, id: `person_${Date.now()}` };
-    await updateDoc(itemsRef, { list: arrayUnion(personWithId) });
-    await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    const personWithId = stripUndefined({ ...newPerson, id: `person_${Date.now()}` });
+    try {
+      await updateDoc(itemsRef, { list: arrayUnion(personWithId) });
+    } catch (err) {
+      await setDoc(itemsRef, { list: [personWithId] }, { merge: true });
+    }
+    try {
+      await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    } catch (err) {
+      await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
+    }
   },
 
   // Photo Requests
@@ -136,9 +162,17 @@ export const projectService = {
   addPhotoRequest: async (projectId: string, newRequest: Omit<ClientPhotoRequestItemFull, 'id'>): Promise<void> => {
     const itemsRef = doc(db, 'projects', projectId, 'photoRequests', 'items');
     const configRef = doc(db, 'projects', projectId, 'photoRequests', 'config');
-    const requestWithId = { ...newRequest, id: `request_${Date.now()}` };
-    await updateDoc(itemsRef, { list: arrayUnion(requestWithId) });
-    await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    const requestWithId = stripUndefined({ ...newRequest, id: `request_${Date.now()}` });
+    try {
+      await updateDoc(itemsRef, { list: arrayUnion(requestWithId) });
+    } catch (err) {
+      await setDoc(itemsRef, { list: [requestWithId] }, { merge: true });
+    }
+    try {
+      await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    } catch (err) {
+      await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
+    }
   },
 
   // Group Shots
@@ -197,8 +231,16 @@ export const projectService = {
   addTimelineEvent: async (projectId: string, newEvent: Omit<ClientTimelineEventFull, 'id'>): Promise<void> => {
     const itemsRef = doc(db, 'projects', projectId, 'timeline', 'items');
     const configRef = doc(db, 'projects', projectId, 'timeline', 'config');
-    const eventWithId = { ...newEvent, id: `event_${Date.now()}` };
-    await updateDoc(itemsRef, { list: arrayUnion(eventWithId) });
-    await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    const eventWithId = stripUndefined({ ...newEvent, id: `event_${Date.now()}` });
+    try {
+      await updateDoc(itemsRef, { list: arrayUnion(eventWithId) });
+    } catch (err) {
+      await setDoc(itemsRef, { list: [eventWithId] }, { merge: true });
+    }
+    try {
+      await updateDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });
+    } catch (err) {
+      await setDoc(configRef, { updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() }, { merge: true });
+    }
   },
 };

@@ -4,6 +4,8 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { SvgIcon } from '@/components/ui/Icon';
+import { getGroupCategoryIconSrc } from '@/lib/groupIconMaps';
 import { PortalGroupShotData, ClientGroupShotItemFull, ClientKeyPersonFull } from '@/types';
 
 interface GroupShotsSectionProps {
@@ -68,7 +70,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections, onAddCusto
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-4 max-w-3xl mx-auto mb-8 sticky top-4 z-10">
+      <div className="bg-white rounded-md shadow-md p-4 max-w-3xl mx-auto mb-8 sticky top-4 z-10">
         <div className="flex justify-between items-center">
           <span className="font-bold text-lg text-gray-800">Total Estimated Time:</span>
           <span className="text-2xl font-bold text-[#4A90E2]">{config.totalTimeEstimated} minutes</span>
@@ -83,30 +85,33 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections, onAddCusto
 
       <div className="space-y-2 max-w-3xl mx-auto">
         {categories.map((category) => (
-          <div key={category.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div key={category.id} className="border border-gray-200 rounded-md overflow-hidden bg-white">
             <button
               onClick={() => handleToggleAccordion(category.id)}
-              className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 focus:outline-none"
+              className="w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-gray-100 focus:outline-none"
               aria-expanded={openAccordion === category.id}
             >
-              <h3 className="text-lg font-semibold text-gray-700">{category.displayName}</h3>
+              <div className="flex items-center gap-2">
+                <SvgIcon src={getGroupCategoryIconSrc(category.id as any)} size={20} title={category.displayName} />
+                <h3 className="text-base font-semibold text-gray-800">{category.displayName}</h3>
+              </div>
               <ChevronIcon open={openAccordion === category.id} />
             </button>
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${openAccordion === category.id ? 'max-h-screen' : 'max-h-0'}`}>
-              <div className="p-4 border-t border-gray-200">
+              <div className="px-2 py-2 border-t border-gray-200 space-y-1">
                 {itemsByCategory[category.id]?.map((item) => (
-                  <label key={item.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50 cursor-pointer">
+                  <label key={item.id} className="flex items-center justify-between gap-3 px-2 py-2 rounded-md hover:bg-gray-50 cursor-pointer">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{item.name}</p>
+                      {item.notes && <p className="text-sm text-gray-500">{item.notes}</p>}
+                    </div>
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={(e) => handleCheckboxChange(item.id, e.target.checked)}
                       disabled={config.finalized}
-                      className="h-5 w-5 rounded border-gray-300 text-[#4A90E2] focus:ring-[#4A90E2] mt-1"
+                      className="h-5 w-5 rounded form-checkbox"
                     />
-                    <div>
-                      <span className="font-medium text-gray-800">{item.name}</span>
-                      {item.notes && <p className="text-sm text-gray-500">{item.notes}</p>}
-                    </div>
                   </label>
                 ))}
               </div>
@@ -143,7 +148,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections, onAddCusto
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Who is in this photo?</label>
-            <div className="mt-2 max-h-48 overflow-y-auto space-y-2 p-2 border rounded-md bg-gray-50">
+              <div className="mt-2 max-h-48 overflow-y-auto space-y-2 p-2 border rounded-md bg-gray-50">
               {people.length > 0 ? (
                 people.map((person) => (
                   <label key={person.id} className="flex items-center space-x-3">

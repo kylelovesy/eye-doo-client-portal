@@ -64,8 +64,8 @@ export const PhotoRequestsSection = ({ config, items, onAddRequest }: PhotoReque
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items && items.length > 0 ? (
           items.map(req => (
-            <div key={req.id} className="rounded-lg shadow-lg group" style={{ backgroundColor: colors.surface }}>
-              <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 relative">
+            <div key={req.id} className="rounded-md shadow-lg group" style={{ backgroundColor: colors.surface }}>
+              <div className="w-full overflow-hidden rounded-t-md bg-gray-200 relative" style={{ aspectRatio: '4 / 3' }}>
                 <Image 
                   src={req.imageUrl || `https://placehold.co/400x300/E9ECEF/1A1A1A?text=Request`} 
                   alt={req.description}
@@ -88,38 +88,48 @@ export const PhotoRequestsSection = ({ config, items, onAddRequest }: PhotoReque
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Photo Request">
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea id="description" name="description" rows={3} required placeholder="e.g., A photo of us with our dog, a recreation of a photo from our first date." className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
-              <select id="type" name="type" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
-                {Object.values(PhotoRequestType).map(type => <option key={type} value={type}>{type}</option>)}
-              </select>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea id="description" name="description" rows={3} required placeholder="e.g., A photo of us with our dog, a recreation of a photo from our first date." className="form-textarea"></textarea>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
+                <select id="type" name="type" required className="form-select">
+                  {Object.values(PhotoRequestType).map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">Priority</legend>
+                <div className="flex items-center gap-6">
+                  <label className="inline-flex items-center gap-2">
+                    <input className="form-radio" type="radio" name="priority" value="Nice to Have" defaultChecked />
+                    <span>Nice to Have</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input className="form-radio" type="radio" name="priority" value="Must Have" />
+                    <span>Must Have</span>
+                  </label>
+                </div>
+              </fieldset>
             </div>
             <div>
-              <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-              <select id="priority" name="priority" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
-                <option>Nice to Have</option>
-                <option>Must Have</option>
-              </select>
+              <label htmlFor="requestImage" className="block text-sm font-medium text-gray-700">Reference Image (Optional)</label>
+              <input type="file" id="requestImage" name="requestImage" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#D0E4FF] file:text-[#001D36] hover:file:bg-[#b8d6fa]" />
             </div>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="requestImage" className="block text-sm font-medium text-gray-700">Reference Image (Optional)</label>
-            <input type="file" id="requestImage" name="requestImage" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#D0E4FF] file:text-[#001D36] hover:file:bg-[#b8d6fa]" />
-          </div>
-          {previewUrl && (
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700">Image Preview:</p>
-              <Image src={previewUrl} alt="Image preview" className="mt-2 rounded-md max-h-40 w-auto" />
+            {previewUrl && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Image Preview:</p>
+                <Image src={previewUrl} alt="Image preview" className="mt-2 rounded-md max-h-40 w-auto" />
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Request</Button>
             </div>
-          )}
-          <div className="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit">Save Request</Button>
           </div>
         </form>
       </Modal>

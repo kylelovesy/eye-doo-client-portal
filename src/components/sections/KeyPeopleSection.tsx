@@ -64,7 +64,7 @@ export const KeyPeopleSection = ({ config, items, onAddPerson }: KeyPeopleSectio
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items && items.length > 0 ? (
           items.map(person => (
-            <div key={person.id} className="rounded-lg shadow-lg p-5 text-center" style={{ backgroundColor: colors.surface }}>             
+            <div key={person.id} className="rounded-md shadow-lg p-5 text-center" style={{ backgroundColor: colors.surface }}>             
               <h3 style={t.titleMedium}>{person.fullName}</h3>
               <p style={{ ...t.primary.bodyLarge, fontWeight: 600 }}>{person.role}</p>
               
@@ -104,7 +104,7 @@ export const KeyPeopleSection = ({ config, items, onAddPerson }: KeyPeopleSectio
               {Object.values(KeyPersonRole).map(role => <option key={role} value={role}>{role}</option>)}
             </select>
           </div>
-          <div className="space-y-4 mb-4 border p-3 rounded-md">
+          <div className="space-y-3 mb-4 border p-3 rounded-md">
              <div className="flex items-center">
                <input type="checkbox" id="isVIP" name="isVIP" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 form-checkbox" />
                <label htmlFor="isVIP" className="ml-3 block text-sm text-gray-800">VIP</label>

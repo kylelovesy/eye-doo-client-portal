@@ -161,7 +161,7 @@ function PortalPageContent() {
         onNext={() => handleStepChange(currentStep + 1)}
         onPrev={() => handleStepChange(currentStep - 1)}
       />
-      <main>
+      <main className="space-y-10">
         {activeSection === 'people' && keyPeopleData && (
           <KeyPeopleSection config={keyPeopleData.config} items={keyPeopleData.items} onAddPerson={handleAddPerson} />
         )}
