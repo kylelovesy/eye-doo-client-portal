@@ -97,7 +97,7 @@ export const projectService = {
     return () => { u1(); u2(); };
   },
 
-  setMultipleLocations: async (projectId: string, multiple: boolean): Promise<void> => {
+  toggleMultipleLocations: async (projectId: string, multiple: boolean): Promise<void> => {
     const configRef = doc(db, 'projects', projectId, 'locations', 'config');
     try {
       await updateDoc(configRef, { multipleLocations: multiple, updatedAt: serverTimestamp(), clientLastViewed: serverTimestamp() });

@@ -170,7 +170,7 @@ function PortalPageContent() {
             config={locationData.config}
             items={locationData.items}
             onAddLocation={handleAddLocation}
-            onSetMultipleLocations={(multiple) => projectService.setMultipleLocations(projectId, multiple)}
+            onSetMultipleLocations={(multiple) => projectService.toggleMultipleLocations(projectId, multiple)}
           />
         )}
         {activeSection === 'groups' && groupShotData && (

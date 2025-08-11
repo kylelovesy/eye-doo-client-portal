@@ -86,10 +86,10 @@ export interface ClientLocationFull {
   locationAddress2?: string;
   locationPostcode: string;
   locationNotes?: string;
-  arriveTime?: string; 
-  leaveTime?: string;
-  nextLocationTravelTimeEstimate?: number;
-  nextLocationTravelArrangements?: string;
+  arriveTime?: Timestamp | null; 
+  leaveTime?: Timestamp | null;
+  nextLocationTravelTimeEstimate?: number | null;
+  nextLocationTravelArrangements?: string | null;
 }
 
 export interface PortalLocationData {

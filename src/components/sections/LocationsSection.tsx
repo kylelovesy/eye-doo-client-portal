@@ -7,6 +7,7 @@ import { SvgIcon } from '@/components/ui/Icon';
 import { getLocationIconSrc } from '@/lib/iconMaps';
 import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
 import { ClientLocationFull, LocationConfig, LocationType } from '@/types';
+import { Timestamp } from 'firebase/firestore';
 
 interface LocationsSectionProps {
   config: LocationConfig;
@@ -25,6 +26,10 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
     locationAddress2: '',
     locationPostcode: '',
     locationNotes: '',
+    arriveTime: null,
+    leaveTime: null,
+    nextLocationTravelTimeEstimate: null,
+    nextLocationTravelArrangements: null,
   });
   const colors = useAppThemeColors();
   const t = useTypography();
@@ -42,6 +47,15 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
+    const parseTime = (value: FormDataEntryValue | null): Timestamp | undefined => {
+      const str = (value as string) || '';
+      if (!str) return undefined;
+      const [hh, mm] = str.split(':').map((n) => parseInt(n || '0', 10));
+      const d = new Date();
+      d.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+      return Timestamp.fromDate(d);
+    };
     
     const newLocation: Omit<ClientLocationFull, 'id'> = {
       locationName: formData.get('locationName') as string,
@@ -49,11 +63,11 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
         ? formData.get('locationType') as LocationType 
         : LocationType.SINGLE_LOCATION,
       locationAddress1: formData.get('locationAddress1') as string,
-      locationAddress2: formData.get('locationAddress2') as string,
+      locationAddress2: (formData.get('locationAddress2') as string) || undefined,
       locationPostcode: formData.get('locationPostcode') as string,
-      locationNotes: formData.get('locationNotes') as string,
-      arriveTime: (formData.get('arriveTime') as string) || undefined,
-      leaveTime: (formData.get('leaveTime') as string) || undefined,
+      locationNotes: (formData.get('locationNotes') as string) || undefined,
+      arriveTime: parseTime(formData.get('arriveTime')),
+      leaveTime: parseTime(formData.get('leaveTime')),
       nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
       nextLocationTravelArrangements: (formData.get('travelArrangements') as string) || undefined,
     };
@@ -72,6 +86,10 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
       locationAddress2: singleForm.locationAddress2.trim() || undefined,
       locationPostcode: singleForm.locationPostcode.trim(),
       locationNotes: singleForm.locationNotes.trim() || undefined,
+      arriveTime: undefined,
+      leaveTime: undefined,
+      nextLocationTravelTimeEstimate: undefined,
+      nextLocationTravelArrangements: undefined,
     };
     onAddLocation(newLocation);
   };
@@ -125,10 +143,10 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
             <label htmlFor="single_address1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
             <input id="single_address1" className="form-input" value={singleForm.locationAddress1} onChange={(e) => setSingleForm({ ...singleForm, locationAddress1: e.target.value })} />
           </div>
-          <div>
+          {/* <div>
             <label htmlFor="single_address2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
             <input id="single_address2" className="form-input" value={singleForm.locationAddress2} onChange={(e) => setSingleForm({ ...singleForm, locationAddress2: e.target.value })} />
-          </div>
+          </div> */}
           <div>
             <label htmlFor="single_postcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
             <input id="single_postcode" className="form-input" value={singleForm.locationPostcode} onChange={(e) => setSingleForm({ ...singleForm, locationPostcode: e.target.value })} />
@@ -167,8 +185,16 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
               )}
               {config.multipleLocations && (loc.arriveTime || loc.leaveTime) && (
                 <div className="flex space-x-4 mt-2 text-sm" style={t.onSurfaceVariant.bodySmall}>
-                  {loc.arriveTime && <span>Arrive: <strong>{loc.arriveTime}</strong></span>}
-                  {loc.leaveTime && <span>Leave: <strong>{loc.leaveTime}</strong></span>}
+                  {loc.arriveTime && 'toDate' in loc.arriveTime && (
+                    <span>
+                      Arrive: <strong>{loc.arriveTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
+                    </span>
+                  )}
+                  {loc.leaveTime && 'toDate' in loc.leaveTime && (
+                    <span>
+                      Leave: <strong>{loc.leaveTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
+                    </span>
+                  )}
                 </div>
               )}
               {/* Display Travel Info */}
