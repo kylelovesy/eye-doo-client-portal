@@ -15,10 +15,10 @@ export const StatusBar = ({ currentStep, steps, onNext, onPrev }: StatusBarProps
   const t = useTypography();
 
   return (
-    <div className="p-4 rounded-lg mb-8 text-center shadow" style={{ backgroundColor: colors.surface }}>
+    <div className="p-6 rounded-lg mb-8 text-center shadow" style={{ backgroundColor: colors.surface }}>
       <h3 style={{ ...t.titleLarge }}>{step.title}</h3>
-      <p style={{ ...t.onSurfaceVariant.bodyMedium }}>{step.description}</p>
-      <div className={styles.progressBar}>
+      <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8, marginBottom: 16 }}>{step.description}</p>
+      <div className={`${styles.progressBar} mb-4`}>
         <div className={styles.progressFill} style={{ width: `${Math.round(((currentStep + 1) / steps.length) * 100)}%` }} />
       </div>
       <div className="flex justify-center items-center space-x-4 mt-3">
@@ -31,7 +31,7 @@ export const StatusBar = ({ currentStep, steps, onNext, onPrev }: StatusBarProps
         </button>
         <Button
           onClick={onNext}
-          style={{ visibility: currentStep === steps.length - 1 ? 'hidden' : 'visible' }}
+          style={{ visibility: currentStep >= steps.length - 1 ? 'hidden' : 'visible' }}
           aria-label="Go to next step"
         >
           Next Step &rarr;

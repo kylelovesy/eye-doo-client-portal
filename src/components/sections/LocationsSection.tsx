@@ -16,7 +16,7 @@ interface LocationsSectionProps {
   onSetMultipleLocations: (multiple: boolean) => void;
 }
 
-export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLocations }: LocationsSectionProps) => {
+export const LocationsSection = ({ config, items, onAddLocation}: LocationsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<LocationType>(LocationType.SINGLE_LOCATION);
   // Inline single-location form state
@@ -37,7 +37,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
   // const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
   // const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
   const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
-  const showMultipleToggle = true;
+  // const showMultipleToggle = true;
   const isSingleFormValid = useMemo(() => {
     return (
       singleForm.locationName.trim().length > 0 &&
@@ -112,7 +112,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
         ) : (
           <>
             {/* Multiple Locations toggle when allowed */}
-            {showMultipleToggle && (
+            {/* {showMultipleToggle && (
               <div className="mt-3 flex justify-center">
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -124,7 +124,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onSetMultipleLo
                   <span>Multiple Locations</span>
                 </label>
               </div>
-            )}
+            )} */}
 
             {/* Add button only when multiple locations workflow */}
             {config.multipleLocations && (

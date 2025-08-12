@@ -157,6 +157,7 @@ categoryId: string;
 notes?: string;
 time: number;
 checked: boolean;
+peopleIds?: string[];
 }
 export interface ClientGroupShotCategory {
 id: string;
@@ -195,6 +196,8 @@ export interface ProjectData {
     projectInfo: {
         projectName: string;
         eventDate?: Date | Timestamp;
+        personNameA: string;
+        personNameB: string;
     };
     photographerName: string;
     portalStatus?: {
