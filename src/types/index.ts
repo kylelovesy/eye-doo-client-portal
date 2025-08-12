@@ -71,11 +71,14 @@ export enum TimelineEventType {
     OTHER = 'Other',
 }
 
+export type SectionStatus  = 'unlocked' | 'locked' | 'finalized';
+
 // --- Interfaces for the 'locations' subcollection ---
 export interface LocationConfig {
   multipleLocations: boolean;
   finalized: boolean; // If true, the portal UI should disable editing.
   photographerReviewed: boolean;
+  status?: SectionStatus;
 }
 
 export interface ClientLocationFull {
@@ -104,6 +107,7 @@ export interface KeyPeopleConfig {
   familySituationsNotes?: string;
   guestsToAvoidNotes?: string;
   surprisesNotes?: string;
+  status?: SectionStatus;
 }
 export interface InvolvedInAction {
     type: KeyPersonActions;
@@ -129,6 +133,7 @@ export interface PortalKeyPeopleData {
 export interface PhotoRequestConfig {
     finalized: boolean;
     photographerReviewed?: boolean;    
+    status?: SectionStatus;
 }
 export interface ClientPhotoRequestItemFull {
     id: string;
@@ -149,6 +154,7 @@ export interface PortalPhotoRequestData {
 export interface GroupShotConfig {
     finalized: boolean;
     totalTimeEstimated: number;
+    status?: SectionStatus;
 }  
 export interface ClientGroupShotItemFull {
 id: string;
@@ -174,6 +180,7 @@ export interface TimelineConfig {
 finalized: boolean;
 officialStartTime?: Date | Timestamp;
 officialEndTime?: Date | Timestamp;
+status?: SectionStatus;
 }
 
 export interface ClientTimelineEventFull {
@@ -199,8 +206,17 @@ export interface ProjectData {
         personNameA: string;
         personNameB: string;
     };
-    photographerName: string;
-    portalStatus?: {
-        currentStep: number;
-    };
+    photographerName: string;   
 }
+
+export interface PortalStatus {
+    currentStep: number;
+    lastUpdated: Timestamp;
+    sectionStates?: {
+      locations?: SectionStatus;
+      keyPeople?: SectionStatus;
+      groupShots?: SectionStatus;
+      photoRequests?: SectionStatus;
+      timeline?: SectionStatus;
+    };
+  }

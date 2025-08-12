@@ -27,8 +27,9 @@ import { PhotoRequestsSection } from '@/components/sections/PhotoRequestsSection
 import { TimelineSection } from '@/components/sections/TimelineSection';
 
 import { projectService } from '@/lib/projectService';
+import { useUnsavedChangesPrompt } from '@/lib/useUnsavedChangesPrompt';
 import { Button } from '@/components/ui/Button';
-import { getLocationIconSrc } from '@/lib/iconMaps';
+// import { getLocationIconSrc } from '@/lib/iconMaps';
 
 const PLANNING_STEPS = [
   { id: 'welcome', title: 'Welcome!', description: 'Begin planning your perfect day with us.' },
@@ -41,7 +42,7 @@ const PLANNING_STEPS = [
 ];
 
 function PortalPageContent() {
-  const [projectHeader, setProjectHeader] = useState<Pick<ProjectData, 'projectInfo' | 'photographerName' | 'portalStatus'> | null>(null);
+  const [projectHeader, setProjectHeader] = useState<ProjectData | null>(null);
   const [locationData, setLocationData] = useState<PortalLocationData | null>(null);
   const [keyPeopleData, setKeyPeopleData] = useState<PortalKeyPeopleData | null>(null);
   const [groupShotData, setGroupShotData] = useState<PortalGroupShotData | null>(null);
@@ -51,6 +52,11 @@ function PortalPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Local-state-first VMs and dirty flags
+  const [locLocal, setLocLocal] = useState<PortalLocationData | null>(null);
+  const [peopleLocal, setPeopleLocal] = useState<PortalKeyPeopleData | null>(null);
+  const [requestsLocal, setRequestsLocal] = useState<PortalPhotoRequestData | null>(null);
 
   const searchParams = useSearchParams();
   const projectId = useMemo(() => searchParams?.get('project') || '', [searchParams]);
@@ -73,28 +79,19 @@ function PortalPageContent() {
     projectService
       .getProjectData(projectId, token)
       .then((project) => {
-        setProjectHeader({
-          projectInfo: project.projectInfo,
-          photographerName: project.photographerName,
-          portalStatus: project.portalStatus,
-        });
+        setProjectHeader(project);
 
-        if (project.portalStatus?.currentStep) {
-          setCurrentStep(project.portalStatus.currentStep);
+        const anyProj = project as unknown as { portalStatus?: { currentStep?: number } };
+        if (anyProj.portalStatus?.currentStep !== undefined) {
+          setCurrentStep(anyProj.portalStatus.currentStep);
         }
 
-        unsubLocations = projectService.listenToLocationUpdates(projectId, setLocationData);
-        unsubPeople = projectService.listenToKeyPeopleUpdates(projectId, setKeyPeopleData);
+        unsubLocations = projectService.listenToLocationUpdates(projectId, (d)=>{ setLocationData(d); setLocLocal((prev)=> prev ?? d); });
+        unsubPeople = projectService.listenToKeyPeopleUpdates(projectId, (d)=>{ setKeyPeopleData(d); setPeopleLocal((prev)=> prev ?? d); });
         unsubGroupShots = projectService.listenToGroupShotData(projectId, setGroupShotData);
-        unsubPhotoRequests = projectService.listenToPhotoRequestUpdates(projectId, setPhotoRequestData);
+        unsubPhotoRequests = projectService.listenToPhotoRequestUpdates(projectId, (d)=>{ setPhotoRequestData(d); setRequestsLocal((prev)=> prev ?? d); });
         unsubTimeline = projectService.listenToTimelineUpdates(projectId, setTimelineData);
-        unsubProject = projectService.listenToProjectUpdates(projectId, (data) => {
-          setProjectHeader((prev) => ({
-            projectInfo: data.projectInfo,
-            photographerName: data.photographerName,
-            portalStatus: data.portalStatus ?? prev?.portalStatus,
-          }));
-        });
+        unsubProject = projectService.listenToProjectUpdates(projectId, (data) => setProjectHeader(data));
 
         setIsLoading(false);
       })
@@ -118,12 +115,34 @@ function PortalPageContent() {
     if (projectId) projectService.updatePortalStatus(projectId, newStep);
   };
 
+  // Local mutators for Locations/KeyPeople/Requests
   const handleAddLocation = (newLocation: Omit<ClientLocationFull, 'id'>) => {
-    if (projectId) projectService.addLocation(projectId, newLocation);
+    setLocLocal(curr => curr ? { ...curr, items: [...curr.items, { ...newLocation, id: `loc_${Date.now()}` }] } : curr);
+  };
+
+  const saveLocations = async () => {
+    if (!projectId || !locLocal) return;
+    await projectService.saveLocations(projectId, locLocal.items);
+    // pull latest snapshot will sync
+  };
+
+  const submitLocations = async () => {
+    await saveLocations();
+    if (projectId) await projectService.submitSection(projectId, 'locations');
   };
 
   const handleAddPerson = (newPerson: Omit<ClientKeyPersonFull, 'id'>) => {
-    if (projectId) projectService.addKeyPerson(projectId, newPerson);
+    setPeopleLocal(curr => curr ? { ...curr, items: [...curr.items, { ...newPerson, id: `person_${Date.now()}` }] } : curr);
+  };
+
+  const saveKeyPeople = async () => {
+    if (!projectId || !peopleLocal) return;
+    await projectService.saveKeyPeopleDraft(projectId, peopleLocal.config, peopleLocal.items);
+  };
+
+  const submitKeyPeople = async () => {
+    await saveKeyPeople();
+    if (projectId) await projectService.submitSection(projectId, 'keyPeople');
   };
 
   const handleUpdateGroupShots = (updatedItems: ClientGroupShotItemFull[]) => {
@@ -147,8 +166,26 @@ function PortalPageContent() {
   // };
 
   const handleAddRequest = (newRequest: Omit<ClientPhotoRequestItemFull, 'id'>) => {
-    if (projectId) projectService.addPhotoRequest(projectId, newRequest);
+    setRequestsLocal(curr => curr ? { ...curr, items: [...curr.items, { ...newRequest, id: `request_${Date.now()}` }] } : curr);
   };
+
+  const saveRequests = async () => {
+    if (!projectId || !requestsLocal) return;
+    await projectService.savePhotoRequestsDraft(projectId, requestsLocal.config, requestsLocal.items);
+  };
+
+  const submitRequests = async () => {
+    await saveRequests();
+    if (projectId) await projectService.submitSection(projectId, 'photoRequests');
+  };
+
+  // Unsaved warning if any section dirty (simple pointer compare)
+  const dirty = Boolean(
+    (locationData && locLocal && (JSON.stringify(locationData) !== JSON.stringify(locLocal))) ||
+    (keyPeopleData && peopleLocal && (JSON.stringify(keyPeopleData) !== JSON.stringify(peopleLocal))) ||
+    (photoRequestData && requestsLocal && (JSON.stringify(photoRequestData) !== JSON.stringify(requestsLocal)))
+  );
+  useUnsavedChangesPrompt(dirty);
 
   const handleAddEvent = (newEvent: Omit<ClientTimelineEventFull, 'id'>) => {
     if (projectId) projectService.addTimelineEvent(projectId, newEvent);
@@ -183,16 +220,28 @@ function PortalPageContent() {
             </Button>
           </div>
         )}
-        {activeSection === 'people' && keyPeopleData && (
-          <KeyPeopleSection config={keyPeopleData.config} items={keyPeopleData.items} onAddPerson={handleAddPerson} />
+        {activeSection === 'people' && peopleLocal && (
+          <>
+            <KeyPeopleSection config={peopleLocal.config} items={peopleLocal.items} onAddPerson={handleAddPerson} />
+            <div className="flex gap-3 mt-4">
+              <Button onClick={saveKeyPeople}>Save Key People Data</Button>
+              <Button onClick={submitKeyPeople}>Submit for Review</Button>
+            </div>
+          </>
         )}
-        {activeSection === 'locations' && locationData && (
+        {activeSection === 'locations' && locLocal && (
           <LocationsSection
-            config={locationData.config}
-            items={locationData.items}
+            config={locLocal.config}
+            items={locLocal.items}
             onAddLocation={handleAddLocation}
-            onSetMultipleLocations={(multiple) => projectService.toggleMultipleLocations(projectId, multiple)}
+            onSetMultipleLocations={(multiple)=> setLocLocal(curr => curr ? { ...curr, config: { ...curr.config, multipleLocations: multiple } } : curr)}
           />
+        )}
+        {activeSection === 'locations' && (
+          <div className="flex gap-3 mt-4">
+            <Button onClick={saveLocations}>Save Locations Data</Button>
+            <Button onClick={submitLocations}>Submit for Review</Button>
+          </div>
         )}
         {activeSection === 'groups' && groupShotData && (
           <GroupShotsSection
@@ -202,8 +251,14 @@ function PortalPageContent() {
             // onAddCustomGroup={handleAddCustomGroup}
           />
         )}
-        {activeSection === 'requests' && photoRequestData && (
-          <PhotoRequestsSection config={photoRequestData.config} items={photoRequestData.items} onAddRequest={handleAddRequest} />
+        {activeSection === 'requests' && requestsLocal && (
+          <>
+            <PhotoRequestsSection config={requestsLocal.config} items={requestsLocal.items} onAddRequest={handleAddRequest} />
+            <div className="flex gap-3 mt-4">
+              <Button onClick={saveRequests}>Save Special Requests Data</Button>
+              <Button onClick={submitRequests}>Submit for Review</Button>
+            </div>
+          </>
         )}
         {activeSection === 'timeline' && timelineData && (
           <TimelineSection config={timelineData.config} items={timelineData.items} onAddEvent={handleAddEvent} />
