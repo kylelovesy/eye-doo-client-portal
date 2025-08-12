@@ -1,6 +1,7 @@
 // src/lib/projectService.ts
 import {
   doc,
+  collection,
   getDoc,
   onSnapshot,
   serverTimestamp,
@@ -266,7 +267,7 @@ export const projectService = {
   listenToGroupShotData: (projectId: string, cb: (data: PortalGroupShotData) => void): Unsubscribe => {
     // Define paths to the different data documents
     const categoriesRef = doc(db, 'projects', projectId, 'userLists', 'groupShotsCategories');
-    const defaultItemsRef = doc(db, 'projects', projectId, 'groupShotsUserList');
+    const defaultItemsRef = collection(db, 'projects', projectId, 'groupShotsUserList');
     const savedItemsRef = doc(db, 'projects', projectId, 'groupShots', 'items');
     const configRef = doc(db, 'projects', projectId, 'groupShots', 'config');
 
@@ -314,7 +315,7 @@ export const projectService = {
     
     // Listener for the Default Item List
     const unsubDefaultItems = onSnapshot(defaultItemsRef, (snap) => {
-      cachedDefaultItems = snap.exists() ? (snap.data().list as ClientGroupShotItemFull[]) : [];
+      cachedDefaultItems = snap.docs.map((d) => d.data() as ClientGroupShotItemFull);
       dispatchUpdate();
     });
 
