@@ -14,10 +14,13 @@ interface LocationsSectionProps {
   items: ClientLocationFull[];
   onAddLocation: (location: Omit<ClientLocationFull, 'id'>) => void;
   onSetMultipleLocations: (multiple: boolean) => void;
+  onUpdate: (updatedItems: ClientLocationFull[]) => void;
+  onDelete: (id: string) => void;
 }
 
-export const LocationsSection = ({ config, items, onAddLocation}: LocationsSectionProps) => {
+export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDelete}: LocationsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<LocationType>(LocationType.SINGLE_LOCATION);
   // Inline single-location form state
   const [singleForm, setSingleForm] = useState({
@@ -26,13 +29,49 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
     locationAddress2: '',
     locationPostcode: '',
     locationNotes: '',
-    arriveTime: null,
-    leaveTime: null,
-    nextLocationTravelTimeEstimate: null,
-    nextLocationTravelArrangements: null,
+    arriveTime: null as Date | null,
+    leaveTime: null as Date | null,
+    nextLocationTravelTimeEstimate: null as number | null,
+    nextLocationTravelArrangements: null as string | null,
   });
   const colors = useAppThemeColors();
   const t = useTypography();
+
+  // Check if section is locked or finalized
+  const isSectionLocked = config.finalized || config.status === 'locked' || config.status === 'finalized';
+
+  // Helper function to check if an item is locally added (unsaved)
+  const isLocallyAdded = (id: string) => {
+    return id.startsWith('temp_');
+  };
+
+  const handleEdit = (id: string) => {
+    const locationToEdit = items.find(loc => loc.id === id);
+    if (locationToEdit) {
+      // Populate form with existing data
+      setSelectedType(locationToEdit.locationType);
+      setSingleForm({
+        locationName: locationToEdit.locationName,
+        locationAddress1: locationToEdit.locationAddress1,
+        locationAddress2: locationToEdit.locationAddress2 || '',
+        locationPostcode: locationToEdit.locationPostcode,
+        locationNotes: locationToEdit.locationNotes || '',
+        arriveTime: locationToEdit.arriveTime && 'toDate' in locationToEdit.arriveTime ? locationToEdit.arriveTime.toDate() : null,
+        leaveTime: locationToEdit.leaveTime && 'toDate' in locationToEdit.leaveTime ? locationToEdit.leaveTime.toDate() : null,
+        nextLocationTravelTimeEstimate: locationToEdit.nextLocationTravelTimeEstimate || null,
+        nextLocationTravelArrangements: locationToEdit.nextLocationTravelArrangements || null,
+      });
+      setEditingLocationId(id);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleUpdateLocation = (updatedLocation: Omit<ClientLocationFull, 'id'>) => {
+    const updatedItems = items.map(loc => loc.id === editingLocationId ? { ...updatedLocation, id: editingLocationId } : loc);
+    onUpdate(updatedItems);
+    setEditingLocationId(null);
+    setIsModalOpen(false);
+  };
 
   // const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
   // const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
@@ -48,34 +87,61 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-
-    const parseTime = (value: FormDataEntryValue | null): Timestamp | undefined => {
-      const str = (value as string) || '';
-      if (!str) return undefined;
-      const [hh, mm] = str.split(':').map((n) => parseInt(n || '0', 10));
-      const d = new Date();
-      d.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
-      return Timestamp.fromDate(d);
-    };
     
-    const newLocation: Omit<ClientLocationFull, 'id'> = {
-      locationName: formData.get('locationName') as string,
-      locationType: config.multipleLocations 
-        ? formData.get('locationType') as LocationType 
-        : LocationType.SINGLE_LOCATION,
-      locationAddress1: formData.get('locationAddress1') as string,
-      locationAddress2: (formData.get('locationAddress2') as string) || undefined,
-      locationPostcode: formData.get('locationPostcode') as string,
-      locationNotes: (formData.get('locationNotes') as string) || undefined,
-      arriveTime: parseTime(formData.get('arriveTime')),
-      leaveTime: parseTime(formData.get('leaveTime')),
-      nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
-      nextLocationTravelArrangements: (formData.get('travelArrangements') as string) || undefined,
-    };
+    if (editingLocationId) {
+      // Use singleForm values for editing
+      const updatedLocation: Omit<ClientLocationFull, 'id'> = {
+        locationName: singleForm.locationName,
+        locationType: selectedType,
+        locationAddress1: singleForm.locationAddress1,
+        locationAddress2: singleForm.locationAddress2 || undefined,
+        locationPostcode: singleForm.locationPostcode,
+        locationNotes: singleForm.locationNotes || undefined,
+        arriveTime: undefined, // Not handled in single form yet
+        leaveTime: undefined,  // Not handled in single form yet
+        nextLocationTravelTimeEstimate: singleForm.nextLocationTravelTimeEstimate || undefined,
+        nextLocationTravelArrangements: singleForm.nextLocationTravelArrangements || undefined,
+      };
+      handleUpdateLocation(updatedLocation);
+    } else {
+      // Use form data for adding new locations
+      const formData = new FormData(event.currentTarget);
 
-    onAddLocation(newLocation);
-    setIsModalOpen(false);
+      const parseTime = (value: FormDataEntryValue | null): Timestamp | undefined => {
+        const str = (value as string) || '';
+        if (!str) return undefined;
+        const [hh, mm] = str.split(':').map((n) => parseInt(n || '0', 10));
+        const d = new Date();
+        d.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+        return Timestamp.fromDate(d);
+      };
+      
+      const newLocation: Omit<ClientLocationFull, 'id'> = {
+        locationName: formData.get('locationName') as string,
+        locationType: config.multipleLocations 
+          ? formData.get('locationType') as LocationType 
+          : LocationType.SINGLE_LOCATION,
+        locationAddress1: formData.get('locationAddress1') as string,
+        locationAddress2: (formData.get('locationAddress2') as string) || undefined,
+        locationPostcode: formData.get('locationPostcode') as string,
+        locationNotes: (formData.get('locationNotes') as string) || undefined,
+        arriveTime: parseTime(formData.get('arriveTime')),
+        leaveTime: parseTime(formData.get('leaveTime')),
+        nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
+        nextLocationTravelArrangements: (formData.get('travelArrangements') as string) || undefined,
+      };
+
+      // Generate a temporary ID for the new location so it can be edited/deleted
+      const tempLocation: ClientLocationFull = {
+        ...newLocation,
+        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      // Add to local state first, then save
+      const updatedItems = [...items, tempLocation];
+      onUpdate(updatedItems);
+      setIsModalOpen(false);
+    }
   };
 
   const handleInlineSubmit = (e: React.FormEvent) => {
@@ -93,21 +159,50 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
       nextLocationTravelTimeEstimate: undefined,
       nextLocationTravelArrangements: undefined,
     };
-    onAddLocation(newLocation);
+    
+    // Generate a temporary ID for the new location so it can be edited/deleted
+    const tempLocation: ClientLocationFull = {
+      ...newLocation,
+      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    // Add to local state first, then save
+    const updatedItems = [...items, tempLocation];
+    onUpdate(updatedItems);
+    
+    // Reset the form
+    setSingleForm({
+      locationName: '',
+      locationAddress1: '',
+      locationAddress2: '',
+      locationPostcode: '',
+      locationNotes: '',
+      arriveTime: null,
+      leaveTime: null,
+      nextLocationTravelTimeEstimate: null,
+      nextLocationTravelArrangements: null,
+    });
   };
 
+  
   return (
     <section aria-labelledby="locations-heading">
       <div className="text-center mb-6">
-        <h2 id="locations-heading" style={t.titleLarge}>Wedding Locations</h2>
+        <h2 id="locations-heading" style={t.titleLarge}>
+          Wedding Locations
+          {config.status === 'locked' && <span className="ml-2 text-sm font-normal text-orange-600">(Locked)</span>}
+          {config.status === 'finalized' && <span className="ml-2 text-sm font-normal text-green-600">(Finalized)</span>}
+        </h2>
         <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
           Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.
         </p>
         
         {/* Finalized state */}
-        {config.finalized ? (
+        {isSectionLocked ? (
           <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-md mx-auto">
-            <p className="font-semibold">This section has been finalized by your photographer and can no longer be edited.</p>
+            <p className="font-semibold">
+              {config.status === 'locked' ? 'This section has been locked by your photographer and can no longer be edited.' : 'This section has been finalized by your photographer and can no longer be edited.'}
+            </p>
           </div>
         ) : (
           <>
@@ -135,7 +230,7 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
       </div>
       
       {/* Inline single-location form when multipleLocations=false and none exist */}
-      {showInlineSingleForm && !config.finalized && (
+      {showInlineSingleForm && !isSectionLocked && (
         <form onSubmit={handleInlineSubmit} className="max-w-3xl mx-auto space-y-4">
           <div>
             <label htmlFor="single_locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
@@ -172,12 +267,32 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
                   <SvgIcon src={getLocationIconSrc(loc.locationType)} size={28} title={loc.locationType} />
                   <h3 style={t.titleMedium}>{loc.locationName}</h3>
                 </div>
-                {config.multipleLocations && (
-                  <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" 
-                        style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>
-                    {loc.locationType}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {config.multipleLocations && (
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" 
+                          style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>
+                      {loc.locationType}
+                    </span>
+                  )}
+                  {!isSectionLocked && isLocallyAdded(loc.id) && (
+                    <>
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => handleEdit(loc.id)}
+                        className="text-xs px-2 py-1"
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => onDelete(loc.id)}
+                        className="text-xs px-2 py-1"
+                      >
+                        Delete
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
               <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress1}</p>
               {loc.locationNotes && (
@@ -218,7 +333,21 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Location">
+      <Modal isOpen={isModalOpen} onClose={() => {
+        setIsModalOpen(false);
+        setEditingLocationId(null);
+        setSingleForm({
+          locationName: '',
+          locationAddress1: '',
+          locationAddress2: '',
+          locationPostcode: '',
+          locationNotes: '',
+          arriveTime: null,
+          leaveTime: null,
+          nextLocationTravelTimeEstimate: null,
+          nextLocationTravelArrangements: null,
+        });
+      }} title={editingLocationId ? "Edit Location" : "Add Location"}>
         <form onSubmit={handleSubmit}>
           {/* Location Type first when multiple locations */}
           {config.multipleLocations && (
@@ -237,22 +366,54 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
 
           <div className="mb-4">
             <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-            <input type="text" id="locationName" name="locationName" required placeholder="e.g., Manor House" className="form-input" />
+            <input 
+              type="text" 
+              id="locationName" 
+              name="locationName" 
+              required 
+              placeholder="e.g., Manor House" 
+              className="form-input"
+              value={editingLocationId ? singleForm.locationName : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationName: e.target.value})}
+            />
           </div>
           
           <div className="mb-4">
             <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
-            <input type="text" id="locationAddress1" name="locationAddress1" required className="form-input" />
+            <input 
+              type="text" 
+              id="locationAddress1" 
+              name="locationAddress1" 
+              required 
+              className="form-input"
+              value={editingLocationId ? singleForm.locationAddress1 : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress1: e.target.value})}
+            />
           </div>
           
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label htmlFor="locationAddress2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
-            <input type="text" id="locationAddress2" name="locationAddress2" className="form-input" />
-          </div>
+            <input 
+              type="text" 
+              id="locationAddress2" 
+              name="locationAddress2" 
+              className="form-input"
+              value={editingLocationId ? singleForm.locationAddress2 : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress2: e.target.value})}
+            />
+          </div> */}
           
           <div className="mb-4">
             <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
-            <input type="text" id="locationPostcode" name="locationPostcode" required className="form-input" />
+            <input 
+              type="text" 
+              id="locationPostcode" 
+              name="locationPostcode" 
+              required 
+              className="form-input"
+              value={editingLocationId ? singleForm.locationPostcode : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationPostcode: e.target.value})}
+            />
           </div>
           
           {/* Conditionally render Arrive/Leave times */}
@@ -275,23 +436,63 @@ export const LocationsSection = ({ config, items, onAddLocation}: LocationsSecti
               <hr className="my-4" />
                <div className="mb-4">
                 <label htmlFor="travelTime" className="block text-sm font-medium text-gray-700">Travel Time to Next Location (minutes)</label>
-                <input type="number" id="travelTime" name="travelTime" min={0} step={5} placeholder="e.g., 25" className="form-input" />
+                <input 
+                  type="number" 
+                  id="travelTime" 
+                  name="travelTime" 
+                  min={0} 
+                  step={5} 
+                  placeholder="e.g., 25" 
+                  className="form-input"
+                  value={editingLocationId ? (singleForm.nextLocationTravelTimeEstimate || '') : ''}
+                  onChange={(e) => editingLocationId && setSingleForm({...singleForm, nextLocationTravelTimeEstimate: Number(e.target.value) || null})}
+                />
               </div>
               <div className="mb-4">
                 <label htmlFor="travelArrangements" className="block text-sm font-medium text-gray-700">Travel Arrangements</label>
-                <textarea id="travelArrangements" name="travelArrangements" rows={2} placeholder="e.g., Guests will drive, couple has a limo" className="form-textarea"></textarea>
+                <textarea 
+                  id="travelArrangements" 
+                  name="travelArrangements" 
+                  rows={2} 
+                  placeholder="e.g., Guests will drive, couple has a limo" 
+                  className="form-textarea"
+                  value={editingLocationId ? (singleForm.nextLocationTravelArrangements || '') : ''}
+                  onChange={(e) => editingLocationId && setSingleForm({...singleForm, nextLocationTravelArrangements: e.target.value})}
+                ></textarea>
               </div>
             </>
           )}
           
           <div className="mb-4">
             <label htmlFor="locationNotes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
-            <textarea id="locationNotes" name="locationNotes" rows={2} placeholder="e.g., Parking is at the rear of the building" className="form-textarea"></textarea>
+            <textarea 
+              id="locationNotes" 
+              name="locationNotes" 
+              rows={2} 
+              placeholder="e.g., Parking is at the rear of the building" 
+              className="form-textarea"
+              value={editingLocationId ? (singleForm.locationNotes || '') : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationNotes: e.target.value})}
+            ></textarea>
           </div>
           
           <div className="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit">Save Location</Button>
+            <Button type="button" variant="secondary" onClick={() => {
+              setIsModalOpen(false);
+              setEditingLocationId(null);
+              setSingleForm({
+                locationName: '',
+                locationAddress1: '',
+                locationAddress2: '',
+                locationPostcode: '',
+                locationNotes: '',
+                arriveTime: null,
+                leaveTime: null,
+                nextLocationTravelTimeEstimate: null,
+                nextLocationTravelArrangements: null,
+              });
+            }}>Cancel</Button>
+            <Button type="submit">{editingLocationId ? 'Update Location' : 'Save Location'}</Button>
           </div>
         </form>
       </Modal>

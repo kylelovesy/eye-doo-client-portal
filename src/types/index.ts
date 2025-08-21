@@ -203,8 +203,14 @@ export interface ProjectData {
     projectInfo: {
         projectName: string;
         eventDate?: Date | Timestamp;
-        personNameA: string;
-        personNameB: string;
+        personA: {
+            firstName: string;
+            surname: string;
+        };
+        personB: {
+            firstName: string;
+            surname: string;
+        };
     };
     photographerName: string;   
 }

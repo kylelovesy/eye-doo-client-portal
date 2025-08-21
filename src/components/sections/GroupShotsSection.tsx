@@ -25,6 +25,9 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
   const [openAccordion, setOpenAccordion] = useState<string | null>(data.categories[0]?.id || null);
   const [localItems, setLocalItems] = useState<ClientGroupShotItemFull[]>(data.items);
 
+  // Check if section is locked or finalized
+  const isSectionLocked = data.config.finalized || data.config.status === 'locked' || data.config.status === 'finalized';
+
   useEffect(() => {
     return () => {
       onUpdateSelections(localItems);
@@ -34,11 +37,12 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
   const { config, categories } = data;
 
   const handleToggleAccordion = (categoryId: string) => {
+    if (isSectionLocked) return; // Prevent toggling when locked
     setOpenAccordion((prev) => (prev === categoryId ? null : categoryId));
   };
 
   const handleCheckboxChange = (itemId: string, isChecked: boolean) => {
-    if (config.finalized) return;
+    if (isSectionLocked) return; // Prevent changes when locked
     const updatedItems = localItems.map((item) => (item.id === itemId ? { ...item, checked: isChecked } : item));
     setLocalItems(updatedItems);
   };
@@ -94,6 +98,8 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
       <div className="text-center mb-6">
         <h2 id="group-shots-heading" className="font-serif text-2xl font-bold">
           Group Photo Planner
+          {config.status === 'locked' && <span className="ml-2 text-sm font-normal text-orange-600">(Locked)</span>}
+          {config.status === 'finalized' && <span className="ml-2 text-sm font-normal text-green-600">(Finalized)</span>}
         </h2>
         <p className="max-w-2xl mx-auto text-gray-600 text-base mt-2">
           Select the group photos you&apos;d like. Your photographer has pre-filled this list with common suggestions.
@@ -107,9 +113,11 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
         </div>
       </div>
 
-      {config.finalized && (
+      {isSectionLocked && (
         <div className="mb-6 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-3xl mx-auto text-center">
-          <p className="font-semibold">This section has been finalized by your photographer and can no longer be edited.</p>
+          <p className="font-semibold">
+            {config.status === 'locked' ? 'This section has been locked by your photographer and can no longer be edited.' : 'This section has been finalized by your photographer and can no longer be edited.'}
+          </p>
         </div>
       )}
 
@@ -118,7 +126,8 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
           <div key={category.id} className="border border-gray-200 rounded-md overflow-hidden bg-white">
             <button
               onClick={() => handleToggleAccordion(category.id)}
-              className="w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-gray-100 focus:outline-none"
+              disabled={isSectionLocked}
+              className={`w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-gray-100 focus:outline-none ${isSectionLocked ? 'cursor-not-allowed opacity-60' : ''}`}
               aria-expanded={openAccordion === category.id}
             >
               <div className="flex items-center gap-2">
@@ -130,7 +139,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${openAccordion === category.id ? 'max-h-screen' : 'max-h-0'}`}>
               <div className="px-2 py-2 border-t border-gray-200 space-y-1">
                 {(itemsByCategory[category.id] || []).map((item) => (
-                  <label key={item.id} className="flex items-center justify-between gap-3 px-2 py-2 rounded-md hover:bg-gray-50 cursor-pointer">
+                  <label key={item.id} className={`flex items-center justify-between gap-3 px-2 py-2 rounded-md hover:bg-gray-50 ${isSectionLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900">{item.notes || item.name}</p>
                     </div>
@@ -138,12 +147,12 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
                       type="checkbox"
                       checked={!!item.checked}
                       onChange={(e) => handleCheckboxChange(item.id, e.target.checked)}
-                      disabled={config.finalized}
+                      disabled={isSectionLocked}
                       className="h-5 w-5 rounded form-checkbox"
                     />
                   </label>
                 ))}
-                {category.displayName === 'Custom' && !config.finalized && (
+                {category.displayName === 'Custom' && !isSectionLocked && (
                   <div className="p-2 pt-4 text-center">
                     <Button type="button" onClick={() => setIsModalOpen(true)}>
                       Add Custom Shot
@@ -156,17 +165,17 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
         ))}
       </div>
       
-      {!config.finalized && (
+      {!isSectionLocked && (
         <div className="text-center mt-8">
             <Button onClick={handleSave}>Save Group Shots</Button>
         </div>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Custom Group Shot">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add a Custom Group Photo">
         <form onSubmit={handleCustomItemSubmit}>
           <div className="mb-4">
-            <label htmlFor="groupName" className="block text-sm font-medium text-gray-700">
-              Group Name / Description
+            <label htmlFor="groupName" className="block text-sm font-bold text-gray-800 mb-1">
+              Group Description
             </label>
             <input
               type="text"
@@ -177,7 +186,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input"
             />
           </div>
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Who is in this photo?</label>
               <div className="mt-2 max-h-48 overflow-y-auto space-y-2 p-2 border rounded-md bg-gray-50">
               {people.length > 0 ? (
@@ -193,7 +202,7 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
                 <p className="text-sm text-gray-500">Please add people in the &quot;Key People&quot; tab first.</p>
               )}
             </div>
-          </div>
+          </div> */}
           <div className="mb-4">
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
               Notes for Photographer (Optional)

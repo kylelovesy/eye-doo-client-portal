@@ -17,7 +17,7 @@ export const StatusBar = ({ currentStep, steps, onNext, onPrev }: StatusBarProps
   return (
     <div className="p-6 rounded-lg mb-8 text-center shadow" style={{ backgroundColor: colors.surface }}>
       <h3 style={{ ...t.titleLarge }}>{step.title}</h3>
-      <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8, marginBottom: 16 }}>{step.description}</p>
+      {/* <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8, marginBottom: 16 }}>{step.description}</p> */}
       <div className={`${styles.progressBar} mb-4`}>
         <div className={styles.progressFill} style={{ width: `${Math.round(((currentStep + 1) / steps.length) * 100)}%` }} />
       </div>
