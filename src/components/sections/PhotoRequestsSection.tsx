@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
-import { ClientPhotoRequestItemFull, PhotoRequestConfig, PhotoRequestType } from '@/types';
+import { ClientPhotoRequestItemFull, PhotoRequestConfig, PhotoRequestCategory, PhotoRequestPriority } from '@/types';
 import Image from 'next/image';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -35,9 +35,10 @@ export const PhotoRequestsSection = ({ config, items, onAddRequest, projectId }:
     const formData = new FormData(event.currentTarget);
     
     const newRequest: Omit<ClientPhotoRequestItemFull, 'id'> = {
+      title: formData.get('description') as string, // Use description as title
       description: formData.get('description') as string,
-      type: formData.get('type') as PhotoRequestType,
-      priority: formData.get('priority') as 'Must Have' | 'Nice to Have',
+      category: formData.get('type') as PhotoRequestCategory, // Use type as category
+      priority: formData.get('priority') as PhotoRequestPriority,
       imageUrl: undefined, // Will be set after upload if file exists
     };
 
@@ -97,13 +98,13 @@ export const PhotoRequestsSection = ({ config, items, onAddRequest, projectId }:
                     <span className="text-gray-500 text-sm">No Image</span>
                   </div>
                 )}
-                <span className={`absolute top-2 right-2 text-xs font-bold text-white px-2 py-1 rounded-full ${req.priority === 'Must Have' ? 'bg-red-500' : 'bg-yellow-500'}`}>
+                <span className={`absolute top-2 right-2 text-xs font-bold text-white px-2 py-1 rounded-full ${req.priority === 'High' ? 'bg-red-500' : req.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'}`}>
                   {req.priority}
                 </span>
               </div>
               <div className="p-4">
                 <p className="font-bold text-lg">{req.description}</p>
-                <p className="text-sm text-gray-600 mt-1">{req.type}</p>
+                <p className="text-sm text-gray-600 mt-1">{req.category}</p>
               </div>
             </div>
           ))
@@ -125,21 +126,25 @@ export const PhotoRequestsSection = ({ config, items, onAddRequest, projectId }:
               <div>
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
                 <select id="type" name="type" required className="form-select">
-                  {Object.values(PhotoRequestType).map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
+                                {Object.values(PhotoRequestCategory).map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
                 </select>
               </div>
               <fieldset>
                 <legend className="block text-sm font-medium text-gray-700 mb-2">Priority</legend>
                 <div className="flex items-center gap-6">
                   <label className="inline-flex items-center gap-2">
-                    <input className="form-radio" type="radio" name="priority" value="Nice to Have" defaultChecked />
-                    <span>Nice to Have</span>
+                    <input className="form-radio" type="radio" name="priority" value="Low" defaultChecked />
+                    <span>Low</span>
                   </label>
                   <label className="inline-flex items-center gap-2">
-                    <input className="form-radio" type="radio" name="priority" value="Must Have" />
-                    <span>Must Have</span>
+                    <input className="form-radio" type="radio" name="priority" value="Medium" />
+                    <span>Medium</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input className="form-radio" type="radio" name="priority" value="High" />
+                    <span>High</span>
                   </label>
                 </div>
               </fieldset>
