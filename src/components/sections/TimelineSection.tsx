@@ -90,6 +90,7 @@ export const TimelineSection = ({ config, items, onUpdate, onDelete }: TimelineS
         startTime: Timestamp.fromDate(base),
         duration: editForm.duration,
         clientNotes: editForm.eventNotes || undefined,
+        isPhotographyRequired: true, // Default to true for timeline events
       };
       handleUpdateEvent(updatedEvent);
     } else {
@@ -108,6 +109,7 @@ export const TimelineSection = ({ config, items, onUpdate, onDelete }: TimelineS
         startTime: Timestamp.fromDate(base),
         duration: Number(formData.get('duration')) || 0,
         clientNotes: formData.get('eventNotes') as string,
+        isPhotographyRequired: true, // Default to true for timeline events
       };
 
       // Generate a temporary ID for the new event so it can be edited/deleted
