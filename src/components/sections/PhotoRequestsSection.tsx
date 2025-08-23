@@ -17,7 +17,7 @@ interface PhotoRequestsSectionProps {
 
 export const PhotoRequestsSection = ({ config, items, onAddRequest, projectId }: PhotoRequestsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const colors = useAppThemeColors();
+  // const colors = useAppThemeColors(); // Commented out as unused
   const t = useTypography();
 
   // Check if section is locked or finalized

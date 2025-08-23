@@ -223,9 +223,9 @@ export const GroupShotsSection = ({ data, people, onUpdateSelections }: GroupSho
               {people.length > 0 ? (
                 people.map((person) => (
                   <label key={person.id} className="flex items-center space-x-3">
-                    <input type="checkbox" name="peopleInvolved" value={`${person.firstName} ${person.surname || ''}`} className="h-4 w-4 rounded border-gray-300 text-[#4A90E2] focus:ring-2" />
-                    <span>
-                      {person.firstName} {person.surname} ({person.role})
+                    <input type="checkbox" name="peopleInvolved" value={`${person.fullName}`} className="h-4 w-4 rounded border-gray-300 text-[#4A90E2] focus:ring-2" />
+                    <span>  
+                      {person.fullName} ({person.role})
                     </span>
                   </label>
                 ))

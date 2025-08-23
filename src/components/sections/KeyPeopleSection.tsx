@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useAppThemeColors, useTypography } from '@/lib/useAppStyle'; // Added from previous code
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { ClientKeyPersonFull, KeyPeopleConfig, KeyPersonActions, KeyPersonRole } from '@/types';
+import { ClientKeyPersonFull, KeyPeopleConfig, KeyPersonRole, KeyPersonActions } from '@/types';
 
 // Debounce utility function
 function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(func: T, wait: number): T {
@@ -29,18 +29,18 @@ interface KeyPeopleSectionProps {
   onDelete: (id: string) => void;
 }
 
-export const KeyPeopleSection = ({ config, items, onAddPerson, onUpdate, onSave, onEdit, onDelete }: KeyPeopleSectionProps) => {
+export const KeyPeopleSection = ({ config, items, onUpdate, onSave, onEdit, onDelete }: KeyPeopleSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const colors = useAppThemeColors(); // Added from previous code
-  const t = useTypography(); // Added from previous code
+  const colors = useAppThemeColors();
+  const t = useTypography();
 
   const debouncedSave = useCallback(
-    debounce(onSave, 1000), 
+    () => debounce(onSave, 1000), 
     [onSave]
   );
 
   // Check if section is locked or finalized
-  const isSectionLocked = config.finalized || config.status === 'locked' || config.status === 'finalized';
+  const isSectionLocked = config.finalized || config.locked;
 
   const handleAddPerson = (person: Omit<ClientKeyPersonFull, 'id'>) => {
     // Generate a temporary ID for the new person
@@ -50,7 +50,7 @@ export const KeyPeopleSection = ({ config, items, onAddPerson, onUpdate, onSave,
     };
     const newPeople = [...items, newPerson];
     onUpdate(newPeople);
-    debouncedSave(newPeople);
+    debouncedSave()(newPeople);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

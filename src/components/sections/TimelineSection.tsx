@@ -18,7 +18,7 @@ interface TimelineSectionProps {
   onDelete: (id: string) => void;
 }
 
-export const TimelineSection = ({ config, items, onAddEvent, onUpdate, onDelete }: TimelineSectionProps) => {
+export const TimelineSection = ({ config, items, onUpdate, onDelete }: TimelineSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<TimelineEventType>(Object.values(TimelineEventType)[0]);

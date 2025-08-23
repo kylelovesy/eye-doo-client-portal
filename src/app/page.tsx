@@ -65,9 +65,8 @@ function PortalPageContent() {
 
   const searchParams = useSearchParams();
   const projectId = useMemo(() => searchParams?.get('project') || '', [searchParams]);
-
+  const token = useMemo(() => searchParams?.get('token') || '', [searchParams]);
   useEffect(() => {
-    const token = searchParams?.get('token') || '';
     if (!projectId || !token) {
       setError('Invalid or missing portal link.');
       setIsLoading(false);
@@ -83,7 +82,7 @@ function PortalPageContent() {
 
     projectService
       .getProjectData(projectId, token)
-      .then((project) => {
+      .then((project) => {  
         setProjectHeader(project);
 
         const anyProj = project as unknown as { portalStatus?: { currentStep?: number } };
@@ -113,7 +112,7 @@ function PortalPageContent() {
       unsubTimeline?.();
       unsubProject?.();
     };
-  }, [projectId, searchParams]);
+  }, [projectId, searchParams, token]);
 
   const handleStepChange = (newStep: number) => {
     setCurrentStep(newStep);
@@ -200,7 +199,7 @@ function PortalPageContent() {
   };
 
   const handleUpdateGroupShots = (updatedItems: ClientGroupShotItemFull[]) => {
-    if (projectId) projectService.updateGroupShotSelections(projectId, updatedItems);
+    if (projectId) projectService.updateGroupShotSelections(projectId, token, updatedItems);
   };
 
   const handleAddRequest = (newRequest: Omit<ClientPhotoRequestItemFull, 'id'>) => {
@@ -235,7 +234,7 @@ function PortalPageContent() {
   };
 
   const handleAddEvent = (newEvent: Omit<ClientTimelineEventFull, 'id'>) => {
-    if (projectId) projectService.addTimelineEvent(projectId, newEvent);
+    if (projectId) projectService.addTimelineEvent(projectId, token, newEvent);
   };
 
   const handleUpdateTimeline = (updatedItems: ClientTimelineEventFull[]) => {
@@ -274,18 +273,19 @@ function PortalPageContent() {
   };
 
   // Helper function to check if a section has unsaved changes
-  const hasUnsavedChanges = (section: string) => {
-    switch (section) {
-      case 'locations':
-        return locationData && locLocal && (JSON.stringify(locationData) !== JSON.stringify(locLocal));
-      case 'keyPeople':
-        return keyPeopleData && peopleLocal && (JSON.stringify(keyPeopleData) !== JSON.stringify(peopleLocal));
-      case 'requests':
-        return photoRequestData && requestsLocal && (JSON.stringify(photoRequestData) !== JSON.stringify(requestsLocal));
-      default:
-        return false;
-    }
-  };
+  // Commented out as currently unused - can be restored if needed for future features
+  // const hasUnsavedChanges = (section: string) => {
+  //   switch (section) {
+  //     case 'locations':
+  //       return locationData && locLocal && (JSON.stringify(locationData) !== JSON.stringify(locLocal));
+  //     case 'keyPeople':
+  //       return keyPeopleData && peopleLocal && (JSON.stringify(keyPeopleData) !== JSON.stringify(peopleLocal));
+  //     case 'requests':
+  //       return photoRequestData && requestsLocal && (JSON.stringify(photoRequestData) !== JSON.stringify(requestsLocal));
+  //     default:
+  //       return false;
+  //   }
+  // };
 
   // Enhanced save functions with better error handling
   const saveLocations = async () => {
@@ -357,7 +357,7 @@ function PortalPageContent() {
     <div className="container mx-auto p-4 md:p-8">
       <Header 
         projectName={projectHeader.projectInfo.projectName} 
-        photographerName={projectHeader.photographerName} 
+        photographerName={projectHeader.projectInfo.photographerName} 
         personA={projectHeader.projectInfo.personA.firstName} 
         personB={projectHeader.projectInfo.personB.firstName} 
       />

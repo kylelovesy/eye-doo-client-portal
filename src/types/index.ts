@@ -8,28 +8,49 @@ export interface FirestoreTimestamp {
 }
 
 // --- Enums from Schema ---
-export type LocationType = 
-  | 'Single Location'
-  | 'Main Venue' 
-  | 'Ceremony'
-  | 'Getting Ready 1'
-  | 'Getting Ready 2'
-  | 'Reception'
-  | 'Photo Location'
-  | 'Accommodation'
-  | 'Other';
+// LocationType as const object for runtime values
+export const LocationType = {
+  SINGLE_LOCATION: 'Single Location',
+  MAIN_VENUE: 'Main Venue',
+  CEREMONY: 'Ceremony',
+  GETTING_READY_1: 'Getting Ready 1',
+  GETTING_READY_2: 'Getting Ready 2',
+  RECEPTION: 'Reception',
+  PHOTO_LOCATION: 'Photo Location',
+  ACCOMMODATION: 'Accommodation',
+  OTHER: 'Other'
+} as const;
 
-export type KeyPersonRole = 
-  | 'Maid of Honor'
-  | 'Best Man'
-  | 'Bridesmaid'
-  | 'Groomsman'
-  | 'Mother of the Bride'
-  | 'Father of the Bride'
-  | 'Mother of the Groom'
-  | 'Father of the Groom'
-  | 'Other';
+export type LocationType = typeof LocationType[keyof typeof LocationType];
 
+// KeyPersonRole as const object for runtime values
+export const KeyPersonRole = {
+  MAID_OF_HONOR: 'Maid of Honor',
+  BEST_MAN: 'Best Man',
+  BRIDESMAID: 'Bridesmaid',
+  GROOMSMAN: 'Groomsman',
+  MOTHER_OF_BRIDE: 'Mother of the Bride',
+  FATHER_OF_BRIDE: 'Father of the Bride',
+  MOTHER_OF_GROOM: 'Mother of the Groom',
+  FATHER_OF_GROOM: 'Father of the Groom',
+  OTHER: 'Other'
+} as const;
+
+export type KeyPersonRole = typeof KeyPersonRole[keyof typeof KeyPersonRole];
+
+// KeyPersonActions as const object for runtime values
+export const KeyPersonActions = {
+  SPEECH: 'Speech',
+  READING: 'Reading',
+  TOAST: 'Toast',
+  WALK_DOWN_AISLE: 'Walk Down Aisle',
+  SPECIAL_DANCE: 'Special Dance',
+  OTHER: 'Other'
+} as const;
+
+export type KeyPersonActions = typeof KeyPersonActions[keyof typeof KeyPersonActions];
+
+// Legacy SpecialAction type for backward compatibility
 export type SpecialAction = 
   | 'Speech'
   | 'Reading'
@@ -38,28 +59,43 @@ export type SpecialAction =
   | 'Special Dance'
   | 'Other';
 
-export type PhotoRequestCategory = 
-  | 'Group Shot'
-  | 'Individual Shot'
-  | 'Couple Shot'
-  | 'Candid Shot'
-  | 'Detail Shot'
-  | 'Other';
+// PhotoRequestCategory as const object for runtime values
+export const PhotoRequestCategory = {
+  GROUP_SHOT: 'Group Shot',
+  INDIVIDUAL_SHOT: 'Individual Shot',
+  COUPLE_SHOT: 'Couple Shot',
+  CANDID_SHOT: 'Candid Shot',
+  DETAIL_SHOT: 'Detail Shot',
+  OTHER: 'Other'
+} as const;
 
-export type PhotoRequestPriority = 'Low' | 'Medium' | 'High';
+export type PhotoRequestCategory = typeof PhotoRequestCategory[keyof typeof PhotoRequestCategory];
 
-export type TimelineEventType = 
-  | 'Bridal Prep'
-  | 'Groom Prep'
-  | 'Ceremony Begins'
-  | 'Reception Drinks'
-  | 'Group Photos'
-  | 'Couple Portraits'
-  | 'Wedding Breakfast'
-  | 'Speeches'
-  | 'First Dance'
-  | 'Evening Entertainment'
-  | 'Other';
+// PhotoRequestPriority as const object for runtime values
+export const PhotoRequestPriority = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High'
+} as const;
+
+export type PhotoRequestPriority = typeof PhotoRequestPriority[keyof typeof PhotoRequestPriority];
+
+// TimelineEventType as const object for runtime values
+export const TimelineEventType = {
+  BRIDAL_PREP: 'Bridal Prep',
+  GROOM_PREP: 'Groom Prep',
+  CEREMONY_BEGINS: 'Ceremony Begins',
+  RECEPTION_DRINKS: 'Reception Drinks',
+  GROUP_PHOTOS: 'Group Photos',
+  COUPLE_PORTRAITS: 'Couple Portraits',
+  WEDDING_BREAKFAST: 'Wedding Breakfast',
+  SPEECHES: 'Speeches',
+  FIRST_DANCE: 'First Dance',
+  EVENING_ENTERTAINMENT: 'Evening Entertainment',
+  OTHER: 'Other'
+} as const;
+
+export type TimelineEventType = typeof TimelineEventType[keyof typeof TimelineEventType];
 
 export type StepStatus = 'unlocked' | 'inProgress' | 'completed' | 'locked' | 'finalized';
 export type StepAction = 'photographer' | 'client' | 'none';
@@ -80,6 +116,7 @@ export interface Project {
       address?: string;
     };
     eventDate: FirestoreTimestamp;
+    photographerName: string;
     locationName: string;
     projectStatus?: 'Draft' | 'Active' | 'Completed' | 'Cancelled';
     locationPostcode?: string;
@@ -141,6 +178,9 @@ export interface LocationConfig {
   locked?: boolean;
   updatedAt: FirestoreTimestamp;
   clientLastViewed?: FirestoreTimestamp;
+  
+  // Add status field for UI state management
+  status?: 'draft' | 'locked' | 'finalized';
 }
 
 export interface ClientLocationFull {
@@ -153,6 +193,13 @@ export interface ClientLocationFull {
   contactPerson?: string;
   contactPhone?: string;
   contactEmail?: string;
+  
+  // Add missing fields that the component expects
+  locationAddress1?: string; // Legacy field for backward compatibility
+  arriveTime?: FirestoreTimestamp; // Arrival time
+  leaveTime?: FirestoreTimestamp; // Departure time
+  nextLocationTravelTimeEstimate?: number; // Travel time in minutes
+  nextLocationTravelArrangements?: string; // Travel arrangements
 }
 
 export interface LocationItems {
@@ -165,17 +212,30 @@ export interface KeyPeopleConfig {
   locked?: boolean;
   updatedAt: FirestoreTimestamp;
   clientLastViewed?: FirestoreTimestamp;
+  
+  // Add status field for UI state management
+  status?: 'draft' | 'locked' | 'finalized';
 }
 
 export interface ClientKeyPersonFull {
   id: string; // Format: "person_{timestamp}"
-  firstName: string;
-  surname?: string;
+  fullName: string;
   role: KeyPersonRole;
-  relationship: string;
   phoneNumber?: string;
   email?: string;
+  
+  // New fields for photo preferences
+  mustPhotograph: boolean;
+  dontPhotograph: boolean;
+  isVIP: boolean;
+  canRallyPeople: boolean;
+  
+  // Special actions they're involved in (updated to use new structure)
+  involvedIn?: Array<{ type: KeyPersonActions }>;
+  
+  // Legacy field for backward compatibility
   specialActions?: SpecialAction[];
+  
   notes?: string;
 }
 
@@ -189,6 +249,9 @@ export interface PhotoRequestConfig {
   locked?: boolean;
   updatedAt: FirestoreTimestamp;
   clientLastViewed?: FirestoreTimestamp;
+  
+  // Add status field for UI state management
+  status?: 'draft' | 'locked' | 'finalized';
 }
 
 export interface ClientPhotoRequestItemFull {
@@ -201,6 +264,10 @@ export interface ClientPhotoRequestItemFull {
   locationPreference?: string;
   timePreference?: string;
   notes?: string;
+  
+  // Add missing fields that the component expects
+  type?: PhotoRequestCategory; // Alias for category
+  imageUrl?: string; // For reference images
 }
 
 export interface PhotoRequestItems {
@@ -252,14 +319,28 @@ export interface TimelineConfig {
   locked?: boolean;
   updatedAt: FirestoreTimestamp;
   clientLastViewed?: FirestoreTimestamp;
+  
+  // Add status field for UI state management
+  status?: 'draft' | 'locked' | 'finalized';
 }
 
 export interface ClientTimelineEventFull {
   id: string; // Format: "event_{timestamp}"
   title: string;
-  eventType: TimelineEventType;
-  startTime: string; // Format: "HH:MM"
-  endTime?: string; // Format: "HH:MM"
+  
+  // Use 'type' instead of 'eventType' to match component expectations
+  type: TimelineEventType;
+  
+  // Use FirestoreTimestamp for startTime to match component expectations
+  startTime: FirestoreTimestamp;
+  endTime?: FirestoreTimestamp;
+  
+  // Add missing fields that the component expects
+  duration: number; // Duration in minutes
+  clientNotes?: string; // Notes from client
+  
+  // Legacy fields for backward compatibility
+  eventType?: TimelineEventType; // Alias for type
   location?: string;
   description?: string;
   peopleInvolved?: string[];

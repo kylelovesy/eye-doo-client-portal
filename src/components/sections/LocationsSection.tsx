@@ -18,15 +18,14 @@ interface LocationsSectionProps {
   onDelete: (id: string) => void;
 }
 
-export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDelete}: LocationsSectionProps) => {
+export const LocationsSection = ({ config, items, onUpdate, onDelete}: LocationsSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<LocationType>(LocationType.SINGLE_LOCATION);
   // Inline single-location form state
   const [singleForm, setSingleForm] = useState({
     locationName: '',
-    locationAddress1: '',
-    locationAddress2: '',
+    locationAddress: '',
     locationPostcode: '',
     locationNotes: '',
     arriveTime: null as Date | null,
@@ -52,8 +51,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
       setSelectedType(locationToEdit.locationType);
       setSingleForm({
         locationName: locationToEdit.locationName,
-        locationAddress1: locationToEdit.locationAddress1,
-        locationAddress2: locationToEdit.locationAddress2 || '',
+        locationAddress: locationToEdit.locationAddress || '', // Use locationAddress as the main address
         locationPostcode: locationToEdit.locationPostcode,
         locationNotes: locationToEdit.locationNotes || '',
         arriveTime: locationToEdit.arriveTime && 'toDate' in locationToEdit.arriveTime ? locationToEdit.arriveTime.toDate() : null,
@@ -80,7 +78,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
   const isSingleFormValid = useMemo(() => {
     return (
       singleForm.locationName.trim().length > 0 &&
-      singleForm.locationAddress1.trim().length > 0 &&
+      singleForm.locationAddress.trim().length > 0 &&
       singleForm.locationPostcode.trim().length > 0
     );
   }, [singleForm]);
@@ -93,8 +91,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
       const updatedLocation: Omit<ClientLocationFull, 'id'> = {
         locationName: singleForm.locationName,
         locationType: selectedType,
-        locationAddress1: singleForm.locationAddress1,
-        locationAddress2: singleForm.locationAddress2 || undefined,
+        locationAddress: singleForm.locationAddress, // Use locationAddress1 as the main address
         locationPostcode: singleForm.locationPostcode,
         locationNotes: singleForm.locationNotes || undefined,
         arriveTime: undefined, // Not handled in single form yet
@@ -121,8 +118,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
         locationType: config.multipleLocations 
           ? formData.get('locationType') as LocationType 
           : LocationType.SINGLE_LOCATION,
-        locationAddress1: formData.get('locationAddress1') as string,
-        locationAddress2: (formData.get('locationAddress2') as string) || undefined,
+        locationAddress: formData.get('locationAddress') as string, // Use locationAddress as the main address
         locationPostcode: formData.get('locationPostcode') as string,
         locationNotes: (formData.get('locationNotes') as string) || undefined,
         arriveTime: parseTime(formData.get('arriveTime')),
@@ -150,8 +146,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
     const newLocation: Omit<ClientLocationFull, 'id'> = {
       locationName: singleForm.locationName.trim(),
       locationType: LocationType.SINGLE_LOCATION,
-      locationAddress1: singleForm.locationAddress1.trim(),
-      locationAddress2: singleForm.locationAddress2.trim() || undefined,
+      locationAddress: singleForm.locationAddress.trim(), // Use locationAddress as the main address
       locationPostcode: singleForm.locationPostcode.trim(),
       locationNotes: singleForm.locationNotes.trim() || undefined,
       arriveTime: undefined,
@@ -173,8 +168,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
     // Reset the form
     setSingleForm({
       locationName: '',
-      locationAddress1: '',
-      locationAddress2: '',
+      locationAddress: '',
       locationPostcode: '',
       locationNotes: '',
       arriveTime: null,
@@ -237,8 +231,8 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
             <input id="single_locationName" className="form-input" value={singleForm.locationName} onChange={(e) => setSingleForm({ ...singleForm, locationName: e.target.value })} placeholder="e.g., Manor House" />
           </div>
           <div>
-            <label htmlFor="single_address1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
-            <input id="single_address1" className="form-input" value={singleForm.locationAddress1} onChange={(e) => setSingleForm({ ...singleForm, locationAddress1: e.target.value })} />
+            <label htmlFor="single_address" className="block text-sm font-medium text-gray-700">Address (required)</label>
+            <input id="single_address" className="form-input" value={singleForm.locationAddress} onChange={(e) => setSingleForm({ ...singleForm, locationAddress: e.target.value })} />
           </div>
           {/* <div>
             <label htmlFor="single_address2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
@@ -294,7 +288,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
                   )}
                 </div>
               </div>
-              <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress1}</p>
+              <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress}</p>
               {loc.locationNotes && (
                 <p className="text-sm mt-2" style={t.onSurfaceVariant.bodySmall}>
                   Notes: {loc.locationNotes}
@@ -338,8 +332,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
         setEditingLocationId(null);
         setSingleForm({
           locationName: '',
-          locationAddress1: '',
-          locationAddress2: '',
+          locationAddress: '',
           locationPostcode: '',
           locationNotes: '',
           arriveTime: null,
@@ -377,17 +370,17 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
               onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationName: e.target.value})}
             />
           </div>
-          
+            
           <div className="mb-4">
-            <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
+            <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address (required)</label>
             <input 
               type="text" 
-              id="locationAddress1" 
-              name="locationAddress1" 
+              id="locationAddress" 
+              name="locationAddress" 
               required 
               className="form-input"
-              value={editingLocationId ? singleForm.locationAddress1 : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress1: e.target.value})}
+              value={editingLocationId ? singleForm.locationAddress : ''}
+              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress: e.target.value})}
             />
           </div>
           
@@ -482,8 +475,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
               setEditingLocationId(null);
               setSingleForm({
                 locationName: '',
-                locationAddress1: '',
-                locationAddress2: '',
+                locationAddress: '',
                 locationPostcode: '',
                 locationNotes: '',
                 arriveTime: null,
@@ -524,8 +516,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 //       locationType: config.multipleLocations 
 //         ? formData.get('locationType') as LocationType 
 //         : LocationType.SINGLE_LOCATION,
-//       locationAddress1: formData.get('locationAddress1') as string,
-//       locationAddress2: formData.get('locationAddress2') as string,
+//       locationAddress: formData.get('locationAddress') as string,  
 //       locationPostcode: formData.get('locationPostcode') as string,
 //       locationNotes: formData.get('locationNotes') as string,
 //       arriveTime: formData.get('arriveTime') as string,
@@ -564,7 +555,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 //                     <span className="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{loc.locationType}</span>
 //                 )}
 //               </div>
-//               <p className="text-gray-600 mt-1">{loc.locationAddress1}</p>
+//               <p className="text-gray-600 mt-1">{loc.locationAddress}</p>  
 //               {loc.locationNotes && <p className="text-sm text-gray-500 mt-2">Notes: {loc.locationNotes}</p>}
 //               {config.multipleLocations && (loc.arriveTime || loc.leaveTime) && (
 //                 <div className="flex space-x-4 mt-2 text-sm text-gray-700">
@@ -684,8 +675,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 
 // //     // If no existing locations, we are in "single location" quick form mode
 // //     if (!locations || locations.length === 0) {
-// //       const address1 = String(formData.get('locationAddress1') || '').trim();
-// //       const address2 = String(formData.get('locationAddress2') || '').trim();
+// //       const address1 = String(formData.get('locationAddress') || '').trim();
 // //       const postcode = String(formData.get('locationPostcode') || '').trim();
 // //       const notes = String(formData.get('locationNotes') || '').trim();
 
@@ -701,7 +691,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 // //         id: `location_${uuidv4()}`,
 // //         locationType: LocationType.SINGLE_LOCATION,
 // //         locationName: 'Single Location',
-// //         locationAddress1: `${address1}${address2 ? ', ' + address2 : ''} (${postcode})${notes ? ' - ' + notes : ''}`,
+// //         locationAddress: `${address1} (${postcode})${notes ? ' - ' + notes : ''}`,  
 // //       };
 
 // //       onAddLocation(newLocation);
@@ -711,7 +701,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 // //         id: `location_${uuidv4()}`,
 // //         locationName: formData.get('locationName') as string,
 // //         locationType: formData.get('locationType') as LocationType,
-// //         locationAddress1: formData.get('locationAddress1') as string,
+// //         locationAddress: formData.get('locationAddress') as string, 
 // //       };
 
 // //       onAddLocation(newLocation);
@@ -740,7 +730,7 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 // //                 </div>
 // //                 <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>{loc.locationType}</span>
 // //               </div>
-// //               <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress1}</p>
+// //               <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress}</p>
 // //             </div>
 // //           ))
 // //         ) : (
@@ -767,12 +757,8 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 // //           {(!locations || locations.length === 0) ? (
 // //             <>
 // //               <div className="mb-4">
-// //                 <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address</label>
-// //                 <input type="text" id="locationAddress1" name="locationAddress1" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-// //               </div>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationAddress2" className="block text-sm font-medium text-gray-700">Address 2 (optional)</label>
-// //                 <input type="text" id="locationAddress2" name="locationAddress2" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
+// //                 <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address</label>
+// //                 <input type="text" id="locationAddress" name="locationAddress" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
 // //               </div>
 // //               <div className="mb-4">
 // //                 <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode</label>
@@ -796,8 +782,8 @@ export const LocationsSection = ({ config, items, onAddLocation, onUpdate, onDel
 // //                 </select>
 // //               </div>
 // //               <div className="mb-4">
-// //                 <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address / Notes</label>
-// //                 <textarea id="locationAddress1" name="locationAddress1" rows={2} required placeholder="e.g., 123 Country Lane, Chepstow" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
+// //                 <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address / Notes</label>  
+// //                 <textarea id="locationAddress" name="locationAddress" rows={2} required placeholder="e.g., 123 Country Lane, Chepstow" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
 // //               </div>
 // //             </>
 // //           )}
