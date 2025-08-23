@@ -212,7 +212,27 @@ export interface ProjectData {
             surname: string;
         };
     };
-    photographerName: string;   
+    photographerName: string;
+    clientPortal?: ClientPortal; // Added from main app
+    metadata?: ProjectMetadata; // Added from main app
+}
+
+export interface ClientPortal {
+    portalSetup: boolean;
+    createdAt?: Timestamp;
+    updatedAt?: Timestamp;
+    expiresAt?: Timestamp;
+    currentStepID: string; // Simplified to string for portal
+    portalUrl?: string;
+    accessToken?: string;
+    isEnabled: boolean;
+    portalMessage?: string;
+    portalSetupComplete: boolean;
+}
+
+export interface ProjectMetadata {
+    hasLaunchedDashboard?: boolean;
+    firstLaunchDate?: Date | Timestamp | null;
 }
 
 export interface PortalStatus {
