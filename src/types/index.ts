@@ -288,7 +288,7 @@ export interface PortalPhotoRequestData {
 }
 
 // Use schema-compliant GroupShotData for portal components
-export interface PortalGroupShotData extends GroupShotData {}
+export type PortalGroupShotData = GroupShotData;
 
 export interface PortalTimelineData {
   config: TimelineConfig;
@@ -339,7 +339,7 @@ export interface AddTimelineEventRequest {
 export interface ErrorResponse {
   error: string;
   code?: string;
-  details?: any;
+  details?: unknown;
 }
 
 // --- Utility Types ---
