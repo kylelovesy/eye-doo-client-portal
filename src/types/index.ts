@@ -1,248 +1,365 @@
-import { Timestamp } from "firebase/firestore";
+// Type definitions aligned with CLIENT_PORTAL_DATA_SCHEMA.md
 
-// --- Enums needed by the Portal ---
-export enum LocationType {
-    SINGLE_LOCATION = 'Single Location', // New value for when multipleLocations is false
-    MAIN_VENUE = 'Main Venue',
-    CEREMONY = 'Ceremony',
-    GETTING_READY_1 = 'Getting Ready 1',
-    GETTING_READY_2 = 'Getting Ready 2',
-    RECEPTION = 'Reception',
-    PHOTO_LOCATION = 'Photo Location',
-    ACCOMMODATION = 'Accommodation',
-    OTHER = 'Other'
-}
-export enum KeyPersonRole {
-    MAID_OF_HONOR = 'Maid of Honor',
-    MATRON_OF_HONOR = 'Matron of Honor',
-    BEST_MAN = 'Best Man',
-    BRIDESMAID = 'Bridesmaid',
-    GROOMSMAN = 'Groomsman',
-    JUNIOR_BRIDESMAID = 'Junior Bridesmaid',
-    JUNIOR_GROOMSMAN = 'Junior Groomsman',
-    FLOWER_GIRL = 'Flower Girl',
-    RING_BEARER = 'Ring Bearer',
-    USHER = 'Usher',
-    MOTHER_OF_BRIDE = 'Mother of the Bride',
-    FATHER_OF_BRIDE = 'Father of the Bride',
-    MOTHER_OF_GROOM = 'Mother of the Groom',
-    FATHER_OF_GROOM = 'Father of the Groom',
-    STEPMOTHER = 'Stepmother',
-    STEPFATHER = 'Stepfather',
-    GRANDMOTHER = 'Grandmother',
-    GRANDFATHER = 'Grandfather',
-    SISTER = 'Sister',
-    BROTHER = 'Brother',
-    OTHER = 'Other',
-}  
-export enum KeyPersonActions {
-    SPEECH = 'Speech',
-    READING = 'Reading',
-    TOAST = 'Toast',
-    WALK_DOWN_AISLE = 'Walk Down Aisle',
-    SPECIAL_DANCE = 'Special Dance',
-    OTHER = 'Other',
-}
-export enum PhotoRequestType {
-    GROUP_SHOT = 'Group Shot',
-    INDIVIDUAL_SHOT = 'Individual Shot',
-    COUPLE_SHOT = 'Couple Shot',
-    CANDID_SHOT = 'Candid Shot',
-    DETAIL_SHOT = 'Detail Shot',
-    OTHER = 'Other',
-}
-export enum TimelineEventType {
-    BRIDAL_PREP = 'Bridal Prep',
-    GROOM_PREP = 'Groom Prep',
-    GUESTS_ARRIVE = 'Guests Arrive',
-    CEREMONY_BEGINS = 'Ceremony Begins',
-    CONFETTI_AND_MINGLING = 'Confetti and Mingling',
-    RECEPTION_DRINKS = 'Reception Drinks',
-    GROUP_PHOTOS = 'Group Photos',
-    COUPLE_PORTRAITS = 'Couple Portraits',
-    WEDDING_BREAKFAST = 'Wedding Breakfast',
-    SPEECHES = 'Speeches',
-    EVENING_GUESTS_ARRIVE = 'Evening Guests Arrive',
-    CAKE_CUTTING = 'Cake Cutting',
-    FIRST_DANCE = 'First Dance',
-    EVENING_ENTERTAINMENT = 'Evening Entertainment',
-    EVENING_BUFFET = 'Evening Buffet',
-    CARRIAGES = 'Carriages',
-    OTHER = 'Other',
+// --- Firestore Timestamp Interface ---
+export interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate(): Date;
 }
 
-export type SectionStatus  = 'unlocked' | 'locked' | 'finalized';
+// --- Enums from Schema ---
+export type LocationType = 
+  | 'Single Location'
+  | 'Main Venue' 
+  | 'Ceremony'
+  | 'Getting Ready 1'
+  | 'Getting Ready 2'
+  | 'Reception'
+  | 'Photo Location'
+  | 'Accommodation'
+  | 'Other';
 
-// --- Interfaces for the 'locations' subcollection ---
+export type KeyPersonRole = 
+  | 'Maid of Honor'
+  | 'Best Man'
+  | 'Bridesmaid'
+  | 'Groomsman'
+  | 'Mother of the Bride'
+  | 'Father of the Bride'
+  | 'Mother of the Groom'
+  | 'Father of the Groom'
+  | 'Other';
+
+export type SpecialAction = 
+  | 'Speech'
+  | 'Reading'
+  | 'Toast'
+  | 'Walk Down Aisle'
+  | 'Special Dance'
+  | 'Other';
+
+export type PhotoRequestCategory = 
+  | 'Group Shot'
+  | 'Individual Shot'
+  | 'Couple Shot'
+  | 'Candid Shot'
+  | 'Detail Shot'
+  | 'Other';
+
+export type PhotoRequestPriority = 'Low' | 'Medium' | 'High';
+
+export type TimelineEventType = 
+  | 'Bridal Prep'
+  | 'Groom Prep'
+  | 'Ceremony Begins'
+  | 'Reception Drinks'
+  | 'Group Photos'
+  | 'Couple Portraits'
+  | 'Wedding Breakfast'
+  | 'Speeches'
+  | 'First Dance'
+  | 'Evening Entertainment'
+  | 'Other';
+
+export type StepStatus = 'unlocked' | 'inProgress' | 'completed' | 'locked' | 'finalized';
+export type StepAction = 'photographer' | 'client' | 'none';
+export type StepID = 'welcome' | 'keyPeople' | 'locations' | 'groupShots' | 'photoRequests' | 'timeline' | 'thankYou';
+
+// --- Main Project Schema ---
+export interface Project {
+  id: string;
+  userId: string;
+  
+  projectInfo: {
+    projectName: string;
+    personA: { firstName: string; surname?: string };
+    personB: { firstName: string; surname?: string };
+    contact: {
+      email: string;
+      phone?: string;
+      address?: string;
+    };
+    eventDate: FirestoreTimestamp;
+    locationName: string;
+    projectStatus?: 'Draft' | 'Active' | 'Completed' | 'Cancelled';
+    locationPostcode?: string;
+  };
+  
+  clientPortal?: {
+    portalSetup: boolean;
+    portalSetupComplete: boolean;
+    isEnabled: boolean;
+    currentStepID: StepID;
+    portalUrl: string;
+    accessToken: string;
+    portalMessage?: string;
+    createdAt: FirestoreTimestamp;
+    updatedAt: FirestoreTimestamp;
+    expiresAt: FirestoreTimestamp;
+  };
+  
+  portalSteps?: PortalStep[];
+  
+  metadata?: {
+    hasLaunchedDashboard?: boolean;
+    firstLaunchDate?: FirestoreTimestamp;
+  };
+  
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface PortalStep {
+  stepNumber: number;
+  stepTitle: string;
+  portalStepID: StepID;
+  stepStatus: StepStatus;
+  actionOn: StepAction;
+  requiredStep: boolean;
+  stepIcon: string;
+}
+
+// --- Portal Access Schema ---
+export interface PortalAccess {
+  projectId: string;
+  accessToken: string;
+  portalId: string;
+  selectedSteps: string[];
+  isEnabled: boolean;
+  createdAt: FirestoreTimestamp;
+  expiresAt: Date;
+  accessCount: number;
+  lastAccessedAt?: FirestoreTimestamp;
+}
+
+// --- Sub-Collection Schemas ---
+
+// 1. Locations
 export interface LocationConfig {
   multipleLocations: boolean;
-  finalized: boolean; // If true, the portal UI should disable editing.
-  photographerReviewed: boolean;
-  status?: SectionStatus;
+  finalized?: boolean;
+  locked?: boolean;
+  updatedAt: FirestoreTimestamp;
+  clientLastViewed?: FirestoreTimestamp;
 }
 
 export interface ClientLocationFull {
-  id: string; 
-  locationName: string;
+  id: string; // Format: "loc_{timestamp}"
   locationType: LocationType;
-  locationAddress1: string;
-  locationAddress2?: string;
+  locationName: string;
+  locationAddress: string;
   locationPostcode: string;
   locationNotes?: string;
-  arriveTime?: Timestamp | null; 
-  leaveTime?: Timestamp | null;
-  nextLocationTravelTimeEstimate?: number | null;
-  nextLocationTravelArrangements?: string | null;
+  contactPerson?: string;
+  contactPhone?: string;
+  contactEmail?: string;
 }
 
+export interface LocationItems {
+  list: ClientLocationFull[];
+}
+
+// 2. Key People
+export interface KeyPeopleConfig {
+  finalized?: boolean;
+  locked?: boolean;
+  updatedAt: FirestoreTimestamp;
+  clientLastViewed?: FirestoreTimestamp;
+}
+
+export interface ClientKeyPersonFull {
+  id: string; // Format: "person_{timestamp}"
+  firstName: string;
+  surname?: string;
+  role: KeyPersonRole;
+  relationship: string;
+  phoneNumber?: string;
+  email?: string;
+  specialActions?: SpecialAction[];
+  notes?: string;
+}
+
+export interface KeyPeopleItems {
+  list: ClientKeyPersonFull[];
+}
+
+// 3. Photo Requests
+export interface PhotoRequestConfig {
+  finalized?: boolean;
+  locked?: boolean;
+  updatedAt: FirestoreTimestamp;
+  clientLastViewed?: FirestoreTimestamp;
+}
+
+export interface ClientPhotoRequestItemFull {
+  id: string; // Format: "request_{timestamp}"
+  title: string;
+  description: string;
+  priority: PhotoRequestPriority;
+  category: PhotoRequestCategory;
+  peopleInvolved?: string[];
+  locationPreference?: string;
+  timePreference?: string;
+  notes?: string;
+}
+
+export interface PhotoRequestItems {
+  list: ClientPhotoRequestItemFull[];
+}
+
+// 4. Group Shots
+export interface GroupShotConfig {
+  totalTimeEstimated: number;
+  finalized?: boolean;
+  locked?: boolean;
+  updatedAt: FirestoreTimestamp;
+  clientLastViewed?: FirestoreTimestamp;
+}
+
+export interface ClientGroupShotItemFull {
+  id: string;
+  title: string;
+  category: string;
+  time: number;
+  checked: boolean;
+  peopleInvolved?: string[];
+  notes?: string;
+}
+
+// Schema-compliant GroupShotData interface (single document structure)
+export interface GroupShotData {
+  config: {
+    totalTimeEstimated: number;
+    finalized?: boolean;
+    locked?: boolean;
+    updatedAt: FirestoreTimestamp;
+    clientLastViewed?: FirestoreTimestamp;
+  };
+  categories: string[];
+  items: ClientGroupShotItemFull[];
+}
+
+// Legacy interface for backward compatibility
+export interface GroupShotItems {
+  categories: string[];
+  items: ClientGroupShotItemFull[];
+}
+
+// 5. Timeline
+export interface TimelineConfig {
+  eventDate: FirestoreTimestamp;
+  finalized?: boolean;
+  locked?: boolean;
+  updatedAt: FirestoreTimestamp;
+  clientLastViewed?: FirestoreTimestamp;
+}
+
+export interface ClientTimelineEventFull {
+  id: string; // Format: "event_{timestamp}"
+  title: string;
+  eventType: TimelineEventType;
+  startTime: string; // Format: "HH:MM"
+  endTime?: string; // Format: "HH:MM"
+  location?: string;
+  description?: string;
+  peopleInvolved?: string[];
+  isPhotographyRequired: boolean;
+  notes?: string;
+}
+
+export interface TimelineItems {
+  list: ClientTimelineEventFull[];
+}
+
+// --- Portal Data Interfaces (for component props) ---
 export interface PortalLocationData {
   config: LocationConfig;
   items: ClientLocationFull[];
 }
 
-// --- Interfaces for the 'keyPeople' subcollection ---
-export interface KeyPeopleConfig {
-  finalized: boolean;
-  photographerReviewed?: boolean;
-  familySituationsNotes?: string;
-  guestsToAvoidNotes?: string;
-  surprisesNotes?: string;
-  status?: SectionStatus;
-}
-export interface InvolvedInAction {
-    type: KeyPersonActions;
-    timelineEventId?: string; // The client might not link it to a specific event
-}
-export interface ClientKeyPersonFull {
-  id: string;
-  fullName: string;
-  role: KeyPersonRole;
-  notes?: string;
-  isVIP?: boolean;
-  canRallyPeople?: boolean;
-  mustPhotograph?: boolean;
-  dontPhotograph?: boolean;
-  involvedIn?: InvolvedInAction[];
-}
 export interface PortalKeyPeopleData {
-    config: KeyPeopleConfig;
-    items: ClientKeyPersonFull[];
+  config: KeyPeopleConfig;
+  items: ClientKeyPersonFull[];
 }
 
-// --- Interfaces for the 'photoRequests' subcollection ---
-export interface PhotoRequestConfig {
-    finalized: boolean;
-    photographerReviewed?: boolean;    
-    status?: SectionStatus;
-}
-export interface ClientPhotoRequestItemFull {
-    id: string;
-    description: string;
-    imageUrl?: string;
-    type: PhotoRequestType;
-    priority: 'Must Have' | 'Nice to Have';
-    // Photographer-specific fields like 'status' and 'photographerNotes' are omitted.
-    // 'linkedPeopleIds' is also omitted for portal simplicity; the client can use the
-    // description field to mention who is in the shot.
-}
 export interface PortalPhotoRequestData {
-    config: PhotoRequestConfig;
-    items: ClientPhotoRequestItemFull[];
+  config: PhotoRequestConfig;
+  items: ClientPhotoRequestItemFull[];
 }
 
-// --- Interfaces for the 'groupShots' subcollection ---
-export interface GroupShotConfig {
-    finalized: boolean;
-    totalTimeEstimated: number;
-    status?: SectionStatus;
-}  
-export interface ClientGroupShotItemFull {
-id: string;
-name: string;
-categoryId: string;
-notes?: string;
-time: number;
-checked: boolean;
-peopleIds?: string[];
-}
-export interface ClientGroupShotCategory {
-id: string;
-displayName: string;
-iconName?: string; // We can use this to render the correct SVG icon
-}
-export interface PortalGroupShotData {
-config: GroupShotConfig;
-categories: ClientGroupShotCategory[];
-items: ClientGroupShotItemFull[];
-}
-// --- Interfaces for the 'timeline' subcollection ---
-export interface TimelineConfig {
-finalized: boolean;
-officialStartTime?: Date | Timestamp;
-officialEndTime?: Date | Timestamp;
-status?: SectionStatus;
-}
-
-export interface ClientTimelineEventFull {
-id: string;
-title: string;
-type: TimelineEventType;
-startTime: Timestamp;
-duration: number;
-locationId?: string;
-linkedPeopleIds?: string[];
-clientNotes?: string;
-}
+// Use schema-compliant GroupShotData for portal components
+export interface PortalGroupShotData extends GroupShotData {}
 
 export interface PortalTimelineData {
-config: TimelineConfig;
-items: ClientTimelineEventFull[];
+  config: TimelineConfig;
+  items: ClientTimelineEventFull[];
 }
 
-export interface ProjectData {
-    projectInfo: {
-        projectName: string;
-        eventDate?: Date | Timestamp;
-        personA: {
-            firstName: string;
-            surname: string;
-        };
-        personB: {
-            firstName: string;
-            surname: string;
-        };
-    };
-    photographerName: string;
-    clientPortal?: ClientPortal; // Added from main app
-    metadata?: ProjectMetadata; // Added from main app
+// --- Cloud Function Interfaces ---
+export interface AuthRequest {
+  projectId: string;
+  accessToken: string;
 }
 
+export interface AuthResponse {
+  token: string;
+}
+
+export interface SaveLocationRequest {
+  projectId: string;
+  accessToken: string;
+  newLocation: Omit<ClientLocationFull, 'id'>;
+}
+
+export interface SaveKeyPeopleRequest {
+  projectId: string;
+  accessToken: string;
+  newPerson: Omit<ClientKeyPersonFull, 'id'>;
+}
+
+export interface SavePhotoRequestRequest {
+  projectId: string;
+  accessToken: string;
+  newRequest: Omit<ClientPhotoRequestItemFull, 'id'>;
+}
+
+export interface UpdateGroupShotsRequest {
+  projectId: string;
+  accessToken: string;
+  updatedItems: ClientGroupShotItemFull[];
+}
+
+export interface AddTimelineEventRequest {
+  projectId: string;
+  accessToken: string;
+  newEvent: Omit<ClientTimelineEventFull, 'id'>;
+}
+
+// --- Error Response ---
+export interface ErrorResponse {
+  error: string;
+  code?: string;
+  details?: any;
+}
+
+// --- Utility Types ---
+export type ProjectData = Project; // Alias for backwards compatibility
+
+// Legacy interfaces for gradual migration (to be removed)
 export interface ClientPortal {
-    portalSetup: boolean;
-    createdAt?: Timestamp;
-    updatedAt?: Timestamp;
-    expiresAt?: Timestamp;
-    currentStepID: string; // Simplified to string for portal
-    portalUrl?: string;
-    accessToken?: string;
-    isEnabled: boolean;
-    portalMessage?: string;
-    portalSetupComplete: boolean;
+  portalSetup: boolean;
+  createdAt?: FirestoreTimestamp;
+  updatedAt?: FirestoreTimestamp;
+  expiresAt?: FirestoreTimestamp;
+  currentStepID: string;
+  portalUrl?: string;
+  accessToken?: string;
+  isEnabled: boolean;
+  portalMessage?: string;
+  portalSetupComplete: boolean;
 }
 
 export interface ProjectMetadata {
-    hasLaunchedDashboard?: boolean;
-    firstLaunchDate?: Date | Timestamp | null;
+  hasLaunchedDashboard?: boolean;
+  firstLaunchDate?: Date | FirestoreTimestamp | null;
 }
-
-export interface PortalStatus {
-    currentStep: number;
-    lastUpdated: Timestamp;
-    sectionStates?: {
-      locations?: SectionStatus;
-      keyPeople?: SectionStatus;
-      groupShots?: SectionStatus;
-      photoRequests?: SectionStatus;
-      timeline?: SectionStatus;
-    };
-  }
