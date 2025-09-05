@@ -1,319 +1,106 @@
-# Architecture Documentation
+# **Architecture Documentation**
 
-## 🏗️ System Architecture Overview
+## **🏗️ System Architecture Overview**
 
-The Eye Doo Client Portal follows a modern, component-based architecture built on Next.js 15 with the App Router pattern. The system is designed around a real-time, collaborative planning experience with Firebase as the backend service.
+The Eye Doo Client Portal utilizes a modern, component-based architecture built on Next.js with the App Router. The system is designed for a real-time, collaborative planning experience, using Firebase for backend services and Zustand for robust client-side state management.
 
-## 🔄 Data Flow Architecture
+## **🔄 Data Flow Architecture**
 
-### 1. Authentication Flow
-```
-Client Portal Link → Cloud Function → Custom Token → Firebase Auth → Portal Access
-```
+The application's data flow is unidirectional and centers around the Zustand store, ensuring a single source of truth for the UI.
 
-1. **Portal Link Generation**: Unique URLs with project ID and access token
-2. **Cloud Function Authentication**: Server-side token validation
-3. **Custom Token Creation**: Firebase-compatible authentication token
-4. **Client Authentication**: Automatic sign-in with custom token
-5. **Portal Access**: Real-time data synchronization begins
+Firebase Firestore \---\> portalService \---\> Zustand Store \---\> React Components  
+       ^                     |                   |                   |  
+       |                     |                   |                   v  
+       \+---------------------+-------------------+------------ User Interactions
 
-### 2. Data Synchronization Flow
-```
-Firebase Firestore ←→ Real-time Listeners ←→ React State ←→ UI Components
-```
+1. **Initialization**: On page load, the portalService authenticates with Firebase and fetches the initial project data.  
+2. **Real-time Listeners**: The portalService sets up real-time Firestore listeners for each data section (Key People, Locations, etc.).  
+3. **State Hydration**: As data is received from Firebase (either initially or through a listener update), the portalService calls actions that update the Zustand store.  
+4. **Component Rendering**: React components subscribe to the Zustand store. When the state changes, components re-render automatically to reflect the new data.  
+5. **User Actions**: User interactions (e.g., adding a new person, checking a box) call update functions within the components.  
+6. **Local State Update**: These functions immediately update the local state in the Zustand store and set an isDirty flag to true. This provides an optimistic UI update for a responsive user experience.  
+7. **Data Persistence**: When the user clicks "Save Changes", the saveCurrentStep action in the Zustand store is triggered. This action calls the portalService to persist the updated section data back to Firebase via a secure Cloud Function. The isDirty flag is reset to false upon successful save.
 
-- **Real-time Listeners**: Continuous data synchronization across all sections
-- **Local State Management**: Optimistic updates with conflict resolution
-- **Component Re-rendering**: Automatic UI updates on data changes
-- **Unsaved Changes Protection**: Prevents data loss during editing
+## **🧠 State Management Architecture (Zustand)**
 
-## 🧩 Component Architecture
+Global state is managed centrally in a single Zustand store, defined in src/store/usePortalStore.ts.
 
-### Component Hierarchy
-```
-PortalPage (Main Container)
-├── Header (Project Info & Navigation)
-├── StatusBar (Progress Indicator)
-├── Planning Sections
-│   ├── KeyPeopleSection
-│   ├── LocationsSection
-│   ├── GroupShotsSection
-│   ├── PhotoRequestsSection
-│   └── TimelineSection
-└── Modal Components (Confirmation, Editing)
-```
+### **Store State (PortalState)**
 
-### Component Responsibilities
+The store holds the entire application state, including:
 
-#### PortalPage (Main Container)
-- **State Management**: Centralized state for all planning sections
-- **Data Fetching**: Orchestrates data loading and synchronization
-- **Step Navigation**: Manages planning workflow progression
-- **Error Handling**: Centralized error management and user feedback
+* isLoading, isSaving, error: UI status flags.  
+* project: Core project details.  
+* currentStep: The currently active planning section (PortalStepID).  
+* keyPeople, locations, groupShots, etc.: The data for each planning section.  
+* isDirty: A boolean flag that tracks if there are unsaved changes in the current section.
 
-#### Section Components
-- **Data Display**: Render current section data
-- **User Input**: Handle form interactions and data editing
-- **Local State**: Manage unsaved changes and validation
-- **Section Submission**: Handle data finalization and review
+### **Store Actions (PortalActions)**
 
-#### Layout Components
-- **Header**: Project information and navigation controls
-- **StatusBar**: Visual progress indicator and step navigation
-- **Modal**: Confirmation dialogs and editing interfaces
+Actions are functions that modify the state. Key actions include:
 
-## 🗄️ Data Architecture
+* initialize: Fetches initial data and sets up listeners.  
+* setStep: Navigates between planning sections.  
+* updateKeyPeople, updateLocations, etc.: Update local state for a section and set isDirty to true.  
+* saveCurrentStep: Persists the current section's dirty data to Firebase.
 
-### Firebase Collections Structure
+## **🧩 Component Architecture**
 
-```
-projects/
-├── {projectId}/
-│   ├── projectInfo/           # Basic project metadata
-│   ├── portalStatus/          # Workflow progress tracking
-│   ├── locations/             # Subcollection
-│   │   ├── config/            # Section configuration
-│   │   └── items/             # Location items
-│   ├── keyPeople/             # Subcollection
-│   │   ├── config/            # Section configuration
-│   │   └── items/             # Key people items
-│   ├── groupShots/            # Subcollection
-│   │   ├── config/            # Section configuration
-│   │   └── items/             # Group shot items
-│   ├── photoRequests/         # Subcollection
-│   │   ├── config/            # Section configuration
-│   │   └── items/             # Photo request items
-│   └── timeline/              # Subcollection
-│       ├── config/            # Section configuration
-│       └── items/             # Timeline event items
-```
+### **Component Hierarchy**
 
-### Data Models
+PortalPage (Root Component)  
+├── Header  
+├── StatusBar  
+└── Current Section Component (Dynamically Rendered)  
+    ├── WelcomeSection  
+    ├── KeyPeopleSection  
+    │   └── SectionContainer  
+    │       └── AddEditModal  
+    ├── LocationsSection  
+    │   └── SectionContainer  
+    │       └── AddEditModal  
+    ├── GroupShotsSection  
+    │   └── SectionContainer  
+    │       └── AddEditModal  
+    ├── PhotoRequestsSection  
+    │   └── SectionContainer  
+    │       └── AddEditModal  
+    └── TimelineSection  
+        └── SectionContainer  
+            └── AddEditModal
 
-#### Section Configuration Pattern
-All planning sections follow a consistent configuration pattern:
+### **Component Responsibilities**
 
-```typescript
-interface SectionConfig {
-  finalized: boolean;           // Section completion status
-  photographerReviewed: boolean; // Professional review status
-  status: SectionStatus;        // 'unlocked' | 'locked' | 'finalized'
-  // Section-specific fields...
+* **PortalPage**: The main container that orchestrates the UI. It reads the currentStep from the Zustand store and dynamically renders the appropriate section component. It also contains the main navigation and save buttons.  
+* **Section Components (KeyPeopleSection, etc.)**: Each section is a self-contained feature component. It is responsible for:  
+  * Subscribing to its specific slice of data from the Zustand store.  
+  * Displaying the data.  
+  * Handling user input and calling the corresponding update action in the store (e.g., updateKeyPeople).  
+* **UI Components (SectionContainer, AddEditModal)**: Reusable presentational components that provide a consistent look and feel. SectionContainer provides the standard section wrapper with locking/finalized status indicators. AddEditModal provides a consistent modal for adding and editing items.  
+* **useEntityManagement Hook**: A custom hook that abstracts the logic for managing a list of entities (add, edit, delete, modal state), promoting reusability across all section components.
+
+## **🗄️ Service Layer Architecture**
+
+### **portalService**
+
+The portalService object (src/services/portalService.ts) is the single point of contact between the client application and the Firebase backend. It abstracts all data fetching and persistence logic away from the components and the store.
+
+#### **Core Responsibilities**
+
+* **Authentication**: Handles the custom token authentication flow by calling the getPortalAuthToken Cloud Function.  
+* **Initial Data Fetching**: Retrieves the main ClientProject document.  
+* **Real-time Data Subscriptions**: Manages Firestore's onSnapshot listeners for each data category.  
+* **Data Persistence**: Uses a single saveClientData Cloud Function to write updated section data back to Firestore, ensuring security and data validation on the server side.
+
+// portalService methods  
+{  
+  getInitialData(projectId, token): Promise\<ClientProject\>,  
+  listenToCategory\<T\>(projectId, category, callback): Unsubscribe,  
+  saveSectionData(projectId, token, section, data): Promise\<void\>  
 }
-```
 
-#### Section Data Pattern
-Each section maintains a consistent data structure:
+## **🔒 Security Architecture**
 
-```typescript
-interface SectionData<T> {
-  config: SectionConfig;        // Section configuration
-  items: T[];                   // Section-specific items
-}
-```
-
-## 🔧 Service Layer Architecture
-
-### ProjectService Class
-
-The `ProjectService` class serves as the primary interface between the React application and Firebase:
-
-#### Core Responsibilities
-- **Authentication**: Handle custom token authentication
-- **Data Fetching**: Retrieve project and section data
-- **Real-time Updates**: Manage Firebase listeners
-- **Data Persistence**: Handle CRUD operations
-- **Conflict Resolution**: Manage concurrent updates
-
-#### Service Methods
-
-```typescript
-class ProjectService {
-  // Authentication
-  getProjectData(projectId: string, token: string): Promise<ProjectData>
-  
-  // Real-time listeners
-  listenToLocationUpdates(projectId: string, callback): Unsubscribe
-  listenToKeyPeopleUpdates(projectId: string, callback): Unsubscribe
-  listenToGroupShotData(projectId: string, callback): Unsubscribe
-  listenToPhotoRequestUpdates(projectId: string, callback): Unsubscribe
-  listenToTimelineUpdates(projectId: string, callback): Unsubscribe
-  
-  // Data updates
-  updateLocationData(projectId: string, data: PortalLocationData): Promise<void>
-  updateKeyPeopleData(projectId: string, data: PortalKeyPeopleData): Promise<void>
-  // ... other update methods
-  
-  // Status management
-  updatePortalStatus(projectId: string, currentStep: number, sectionStates?): Promise<void>
-}
-```
-
-## 🎨 UI Architecture
-
-### Design System
-
-#### Typography
-- **Primary Font**: Plus Jakarta Sans (sans-serif)
-- **Secondary Font**: Playfair Display (serif)
-- **Font Variables**: CSS custom properties for consistent usage
-
-#### Color Scheme
-- **Primary Colors**: Defined in Tailwind CSS configuration
-- **Semantic Colors**: Success, warning, error states
-- **Accessibility**: WCAG AA compliant color contrast
-
-#### Component Library
-- **Button Components**: Primary, secondary, and tertiary variants
-- **Modal Components**: Confirmation and editing dialogs
-- **Form Components**: Input fields, selects, and textareas
-- **Layout Components**: Headers, navigation, and status indicators
-
-### Responsive Design
-- **Mobile-First**: Progressive enhancement approach
-- **Breakpoints**: Tailwind CSS responsive utilities
-- **Touch-Friendly**: Optimized for mobile interactions
-- **Progressive Web App**: Offline capabilities and app-like experience
-
-## 🔒 Security Architecture
-
-### Authentication Security
-- **Custom Tokens**: Server-side token generation and validation
-- **Project Isolation**: Client data separation by project ID
-- **Token Expiration**: Time-limited access tokens
-- **Secure Communication**: HTTPS-only communication
-
-### Data Security
-- **Firestore Rules**: Row-level security and access control
-- **Client Isolation**: Projects are completely isolated
-- **Input Validation**: Client-side and server-side validation
-- **XSS Protection**: React's built-in XSS protection
-
-## 📱 State Management Architecture
-
-### State Structure
-
-#### Global State (PortalPage)
-```typescript
-interface PortalState {
-  // Project data
-  projectHeader: ProjectData | null;
-  
-  // Section data
-  locationData: PortalLocationData | null;
-  keyPeopleData: PortalKeyPeopleData | null;
-  groupShotData: PortalGroupShotData | null;
-  photoRequestData: PortalPhotoRequestData | null;
-  timelineData: PortalTimelineData | null;
-  
-  // UI state
-  isLoading: boolean;
-  error: string | null;
-  currentStep: number;
-  
-  // Local state for unsaved changes
-  locLocal: PortalLocationData | null;
-  peopleLocal: PortalKeyPeopleData | null;
-  requestsLocal: PortalPhotoRequestData | null;
-}
-```
-
-#### Local State Management
-- **Optimistic Updates**: Immediate UI feedback
-- **Conflict Resolution**: Handle concurrent modifications
-- **Unsaved Changes**: Track modifications before submission
-- **Validation**: Client-side data validation
-
-### State Update Patterns
-
-#### Real-time Updates
-```typescript
-// Listen to Firebase changes
-unsubLocations = projectService.listenToLocationUpdates(
-  projectId, 
-  (data) => {
-    setLocationData(data);
-    setLocLocal((prev) => prev ?? data);
-  }
-);
-```
-
-#### Local State Updates
-```typescript
-// Update local state for unsaved changes
-const handleLocationUpdate = (updatedLocation: ClientLocationFull) => {
-  setLocLocal(prev => ({
-    ...prev!,
-    items: prev!.items.map(item => 
-      item.id === updatedLocation.id ? updatedLocation : item
-    )
-  }));
-};
-```
-
-## 🚀 Performance Architecture
-
-### Optimization Strategies
-
-#### Code Splitting
-- **Dynamic Imports**: Lazy load non-critical components
-- **Route-based Splitting**: Separate bundles for different sections
-- **Component-level Splitting**: On-demand component loading
-
-#### Data Optimization
-- **Selective Listening**: Only listen to necessary data changes
-- **Debounced Updates**: Prevent excessive re-renders
-- **Memoization**: React.memo and useMemo for expensive operations
-
-#### Bundle Optimization
-- **Tree Shaking**: Remove unused code
-- **Minification**: Compress production bundles
-- **Image Optimization**: Next.js automatic image optimization
-
-## 🔄 Error Handling Architecture
-
-### Error Categories
-
-#### Authentication Errors
-- Invalid or expired tokens
-- Project access denied
-- Network connectivity issues
-
-#### Data Errors
-- Firestore permission denied
-- Invalid data format
-- Concurrent modification conflicts
-
-#### UI Errors
-- Component rendering failures
-- State synchronization issues
-- User input validation errors
-
-### Error Handling Strategy
-
-#### Graceful Degradation
-- **Fallback UI**: Show error states without crashing
-- **Retry Mechanisms**: Automatic retry for transient failures
-- **User Feedback**: Clear error messages and recovery options
-
-#### Error Boundaries
-- **Component-level**: Catch and handle component errors
-- **Section-level**: Isolate errors to specific planning sections
-- **Global-level**: Catch unhandled errors and show fallback UI
-
-## 🔮 Future Architecture Considerations
-
-### Scalability
-- **Microservices**: Break down into smaller, focused services
-- **Caching Layer**: Redis or similar for performance optimization
-- **CDN Integration**: Global content delivery for better performance
-
-### Extensibility
-- **Plugin Architecture**: Modular system for additional features
-- **API Gateway**: Centralized API management and versioning
-- **Event-driven Architecture**: Decoupled communication between services
-
-### Monitoring and Observability
-- **Application Performance Monitoring**: Track user experience metrics
-- **Error Tracking**: Comprehensive error logging and alerting
-- **User Analytics**: Understand user behavior and optimize workflows
+* **Authentication**: Client access is granted via a short-lived, custom Firebase token generated by a secure Cloud Function (getPortalAuthToken). This function validates the projectId and a secret accessToken before issuing the token.  
+* **Data Access**: All database writes are proxied through a single, secure Cloud Function (saveClientData). This function re-validates the user's credentials and ensures they are only writing to their own project data. Firestore Security Rules provide an additional layer of protection, ensuring authenticated users can only read/write data corresponding to their projectId.  
+* **Input Validation**: Zod schemas (src/types/types.ts) are used to define the shape of data, providing a foundation for robust validation both on the client and potentially on the server within the Cloud Functions.

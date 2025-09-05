@@ -1,182 +1,163 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-    /* Theme colors (light) */
-    --primary: #4A90E2;
-    --on-primary: #FFFFFF;
-    --primary-container: #D0E4FF;
-    --on-primary-container: #001D36;
-    --secondary: #D4A76A;
-    --on-secondary: #FFFFFF;
-    --secondary-container: #FFF2D1;
-    --on-secondary-container: #3D2B00;
-    --surface: #FFFFFF;
-    --on-surface: #1A1A1A;
-    --surface-variant: #E9ECEF;
-    --on-surface-variant: #6C757D;
-    --outline: #CEDBE8;
-    --outline-variant: #E1E8ED;
-    --background: #F5F5F5;
-    --foreground: #1A1A1A;
-    
-    /* Your spacing system */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    --spacing-xxl: 24px;
-    --spacing-xxxl: 32px;
-    
-    /* Your border radius system */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-    
-    /* Fonts */
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-serif: 'Playfair Display', serif;
+  /* Light Theme */
+  --background: oklch(0.9856 0.0139 83.56); /* #FDFBF7 */
+  --foreground: oklch(0.2974 0.0326 25.38); /* #4A3B33 */
+  --card: oklch(0.9606 0.0173 81.88); /* #F8F4EE */
+  --card-foreground: oklch(0.2974 0.0326 25.38); /* #4A3B33 */
+  --popover: oklch(0.9606 0.0173 81.88); /* #F8F4EE */
+  --popover-foreground: oklch(0.2974 0.0326 25.38); /* #4A3B33 */
+  --primary: oklch(0.5705 0.1466 37.36); /* #B45309 */
+  --primary-foreground: oklch(1.0000 0.0000 0.00); /* #FFFFFF */
+  --secondary: oklch(0.8287 0.0732 77.76); /* #E4C090 */
+  --secondary-foreground: oklch(0.4050 0.0227 25.76); /* #57534E */
+  --muted: oklch(0.9272 0.0370 79.85); /* #F1E9DA */
+  --muted-foreground: oklch(0.5208 0.0217 25.29); /* #78716C */
+  --accent: oklch(0.9067 0.0485 75.09); /* #f2daba */
+  --accent-foreground: oklch(0.4050 0.0227 25.76); /* #57534E */
+  --destructive: oklch(0.4437 0.1415 25.12); /* #991B1B */
+  --destructive-foreground: oklch(1.0000 0.0000 0.00); /* #FFFFFF */
+  --border: oklch(0.8847 0.0513 80.31); /* #E4D9BC */
+  --input: oklch(0.8847 0.0513 80.31); /* #E4D9BC */
+  --ring: oklch(0.5705 0.1466 37.36); /* #B45309 */
+  --success: oklch(0.4082 0.0994 151.67); /* #166534 */
+  --success-foreground: oklch(0.9873 0.0132 145.79); /* #F0FDF4 */
+  --warning: oklch(0.4635 0.1138 42.47); /* #854D0E */
+  --warning-foreground: oklch(0.9870 0.0158 90.25); /* #FEFCE8 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary: #4A90E2;
-    --on-primary: #003258;
-    --primary-container: #004F55;
-    --on-primary-container: #A5EAF1;
-    --secondary: #D4A76A;
-    --on-secondary: #402D00;
-    --secondary-container: #4A3A00;
-    --on-secondary-container: #FFF2D1;
-    --surface: #1A1A1A;
-    --on-surface: #E9ECEF;
-    --surface-variant: #41484D;
-    --on-surface-variant: #C1C8CE;
-    --outline: #8C959D;
-    --outline-variant: #41484D;
-    --background: #1A1A1A;
-    --foreground: #E9ECEF;
+.dark {
+  --background: oklch(0.1531 0.0136 25.55); /* #1C1917 */
+  --foreground: oklch(0.9640 0.0056 80.08); /* #F5F5F4 */
+  --card: oklch(0.2162 0.0176 25.65); /* #292524 */
+  --card-foreground: oklch(0.9640 0.0056 80.08); /* #F5F5F4 */
+  --popover: oklch(0.2162 0.0176 25.65); /* #292524 */
+  --popover-foreground: oklch(0.9640 0.0056 80.08); /* #F5F5F4 */
+  --primary: oklch(0.6860 0.1889 44.91); /* #F97316 */
+  --primary-foreground: oklch(1.0000 0.0000 0.00); /* #FFFFFF */
+  --secondary: oklch(0.4050 0.0227 25.76); /* #57534E */
+  --secondary-foreground: oklch(0.9218 0.0088 77.37); /* #E7E5E4 */
+  --muted: oklch(0.2162 0.0176 25.65); /* #292524 */
+  --muted-foreground: oklch(0.6999 0.0158 25.55); /* #A8A29E */
+  --accent: oklch(0.3197 0.0201 25.66); /* #44403C */
+  --accent-foreground: oklch(0.9218 0.0088 77.37); /* #E7E5E4 */
+  --destructive: oklch(0.5300 0.1819 29.23); /* #DC2626 */
+  --destructive-foreground: oklch(1.0000 0.0000 0.00); /* #FFFFFF */
+  --border: oklch(0.3197 0.0201 25.66); /* #44403C */
+  --input: oklch(0.3197 0.0201 25.66); /* #44403C */
+  --ring: oklch(0.6860 0.1889 44.91); /* #F97316 */
+  --success: oklch(0.7624 0.1395 144.42); /* #4ADE80 */
+  --success-foreground: oklch(0.3515 0.0867 151.88); /* #14532D */
+  --warning: oklch(0.8259 0.1470 74.71); /* #FACC15 */
+  --warning-foreground: oklch(0.3622 0.0830 45.09); /* #713F12 */
+}
+
+@theme inline {
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-montserrat);
+  --font-mono: var(--font-geist-mono);
+  
+  --letter-spacing: 0.0em;
+  --radius: 0.5rem;
+  --spacing: 0.4rem;
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --animate-fade-in-scale: fade-in-scale 0.3s ease-out;
+  @keyframes fade-in-scale {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-}
-
-/* Form controls - consistent, higher contrast, tighter radius */
-:where(input[type="text"], input[type="number"], input[type="time"], input[type="email"], input[type="tel"], select, textarea).form-input,
-select.form-select,
-textarea.form-textarea {
-  width: 100%;
-  padding: 10px 12px; /* more comfortable */
-  border: 1px solid var(--outline);
-  border-radius: 8px; /* reduced radius */
-  background: var(--surface);
-  color: var(--on-surface);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--on-surface-variant);
-}
-
-.form-input, .form-select, .form-textarea {
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  transition: all 0.2s ease-in-out;
-}
-
-.form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-container);
-}
-
-
-input.form-input:focus,
-select.form-select:focus,
-textarea.form-textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.25); /* olive green focus */
-}
-
-/* Checkbox/Radio - smaller radius, themed accent */
-input.form-checkbox,
-input.form-radio {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
-  border-radius: 4px;
-}
-
-/* Modal content spacing helper if needed later */
-.modal-content-tight {
-  padding: 20px;
-  border-radius: 10px;
-}
-/* @import "tailwindcss";
-
-:root {
-    --primary: #4A90E2;
-    --on-primary: #FFFFFF;
-    --primary-container: #D0E4FF;
-    --on-primary-container: #001D36;
-    --secondary: #D4A76A;
-    --on-secondary: #FFFFFF;
-    --secondary-container: #FFF2D1;
-    --on-secondary-container: #3D2B00;
-    --surface: #FFFFFF;
-    --on-surface: #1A1A1A;
-    --surface-variant: #E9ECEF;
-    --on-surface-variant: #6C757D;
-    --outline: #CEDBE8;
-    --outline-variant: #E1E8ED;
-    
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    --spacing-xxl: 24px;
-    --spacing-xxxl: 32px;
-    
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-    
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-serif: 'Playfair Display', serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #4A90E2;
-    --on-primary: #FFFFFF;
-    --primary-container: #D0E4FF;
-    --on-primary-container: #001D36;
-    --secondary: #D4A76A;
-    --on-secondary: #FFFFFF;
-    --secondary-container: #FFF2D1;
-    --on-secondary-container: #3D2B00;
-    --surface: #FFFFFF;
-    --on-surface: #1A1A1A;
-    --surface-variant: #E9ECEF;
-    --on-surface-variant: #6C757D;
-    --outline: #CEDBE8;
-    --outline-variant: #E1E8ED;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-} */
+/* Mobile Light Mode Background Gradients */
+@media (max-width: 768px) {
+  :root:not(.dark) body {
+    background:
+      radial-gradient(ellipse 120vw 40vh at top center, rgba(180, 83, 9, 0.3) 0%, transparent 100%),
+      radial-gradient(ellipse 50vw 90vh at bottom left, rgba(180, 83, 9, 0.3) 0%, transparent 100%),
+      radial-gradient(ellipse 50vw 90vh at bottom right, rgba(180, 83, 9, 0.3) 0%, transparent 100%),
+      var(--background);
+  }
+
+  :root:not(.dark) body::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 110vh;
+    background: url('/bg-vine.svg') center bottom / 25vh auto no-repeat;
+    filter: sepia(0) saturate(1) hue-rotate(25deg) brightness(0.6) opacity(0.1);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+/* Mobile Dark Mode Background Gradients */
+@media (max-width: 768px) {
+  .dark body {
+    background:
+      radial-gradient(ellipse 120vw 40vh at top center, rgba(87, 83, 78, 0.3) 0%, transparent 100%),
+      radial-gradient(ellipse 50vw 90vh at bottom left, rgba(87, 83, 78, 0.3) 0%, transparent 100%),
+      radial-gradient(ellipse 50vw 90vh at bottom right, rgba(87, 83, 78, 0.3) 0%, transparent 100%),
+      var(--background);
+  }
+  .dark body::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 110vh;
+    background: url('/bg-vine.svg') center bottom / 25vh auto no-repeat;
+    filter: sepia(0) saturate(1) hue-rotate(25deg) brightness(0.6) opacity(0.1);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+

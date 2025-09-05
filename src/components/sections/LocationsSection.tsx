@@ -1,799 +1,249 @@
-'use client';
+import React, { useState, useEffect } from 'react';
+import { usePortalStore } from '../../store/usePortalStore';
+import { ClientLocation, LocationType, ActionOn } from '../../types/types';
+import { useEntityManagement } from '../../lib/useEntityManagement';
+import { AddEditModal } from '../ui/AddEditModal';
+import { Button } from '../ui/button';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { Card, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Trash2, MapPin, Pencil, CheckCircle, Lock, X } from 'lucide-react';
+import { timestampToTimeString, timeStringToTimestamp } from '../../lib/utils'; 
 
-import React, { useMemo, useState } from 'react';
-import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
-import { SvgIcon } from '@/components/ui/Icon';
-import { getLocationIconSrc } from '@/lib/iconMaps';
-import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
-import { ClientLocationFull, LocationConfig, LocationType } from '@/types';
-import { Timestamp } from 'firebase/firestore';
-
-interface LocationsSectionProps {
-  config: LocationConfig;
-  items: ClientLocationFull[];
-  onAddLocation: (location: Omit<ClientLocationFull, 'id'>) => void;
-  onSetMultipleLocations: (multiple: boolean) => void;
-  onUpdate: (updatedItems: ClientLocationFull[]) => void;
-  onDelete: (id: string) => void;
-}
-
-export const LocationsSection = ({ config, items, onUpdate, onDelete}: LocationsSectionProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<LocationType>(LocationType.SINGLE_LOCATION);
-  // Inline single-location form state
-  const [singleForm, setSingleForm] = useState({
+const emptyLocation: Omit<ClientLocation, 'id'> = {
     locationName: '',
-    locationAddress: '',
+    locationType: LocationType.MAIN_VENUE,
+    locationAddress1: '',
     locationPostcode: '',
     locationNotes: '',
-    arriveTime: null as Date | null,
-    leaveTime: null as Date | null,
-    nextLocationTravelTimeEstimate: null as number | null,
-    nextLocationTravelArrangements: null as string | null,
-  });
-  const colors = useAppThemeColors();
-  const t = useTypography();
-
-  // Check if section is locked or finalized
-  const isSectionLocked = config.finalized || config.status === 'locked' || config.status === 'finalized';
-
-  // Helper function to check if an item is locally added (unsaved)
-  const isLocallyAdded = (id: string) => {
-    return id.startsWith('temp_');
-  };
-
-  const handleEdit = (id: string) => {
-    const locationToEdit = items.find(loc => loc.id === id);
-    if (locationToEdit) {
-      // Populate form with existing data
-      setSelectedType(locationToEdit.locationType);
-      setSingleForm({
-        locationName: locationToEdit.locationName,
-        locationAddress: locationToEdit.locationAddress || '', // Use locationAddress as the main address
-        locationPostcode: locationToEdit.locationPostcode,
-        locationNotes: locationToEdit.locationNotes || '',
-        arriveTime: locationToEdit.arriveTime && 'toDate' in locationToEdit.arriveTime ? locationToEdit.arriveTime.toDate() : null,
-        leaveTime: locationToEdit.leaveTime && 'toDate' in locationToEdit.leaveTime ? locationToEdit.leaveTime.toDate() : null,
-        nextLocationTravelTimeEstimate: locationToEdit.nextLocationTravelTimeEstimate || null,
-        nextLocationTravelArrangements: locationToEdit.nextLocationTravelArrangements || null,
-      });
-      setEditingLocationId(id);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleUpdateLocation = (updatedLocation: Omit<ClientLocationFull, 'id'>) => {
-    const updatedItems = items.map(loc => loc.id === editingLocationId ? { ...updatedLocation, id: editingLocationId } : loc);
-    onUpdate(updatedItems);
-    setEditingLocationId(null);
-    setIsModalOpen(false);
-  };
-
-  // const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
-  // const showMultipleToggle = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
-  const showInlineSingleForm = useMemo(() => !config.multipleLocations && (items?.length || 0) === 0, [config.multipleLocations, items]);
-  // const showMultipleToggle = true;
-  const isSingleFormValid = useMemo(() => {
-    return (
-      singleForm.locationName.trim().length > 0 &&
-      singleForm.locationAddress.trim().length > 0 &&
-      singleForm.locationPostcode.trim().length > 0
-    );
-  }, [singleForm]);
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
-    if (editingLocationId) {
-      // Use singleForm values for editing
-      const updatedLocation: Omit<ClientLocationFull, 'id'> = {
-        locationName: singleForm.locationName,
-        locationType: selectedType,
-        locationAddress: singleForm.locationAddress, // Use locationAddress1 as the main address
-        locationPostcode: singleForm.locationPostcode,
-        locationNotes: singleForm.locationNotes || undefined,
-        arriveTime: undefined, // Not handled in single form yet
-        leaveTime: undefined,  // Not handled in single form yet
-        nextLocationTravelTimeEstimate: singleForm.nextLocationTravelTimeEstimate || undefined,
-        nextLocationTravelArrangements: singleForm.nextLocationTravelArrangements || undefined,
-      };
-      handleUpdateLocation(updatedLocation);
-    } else {
-      // Use form data for adding new locations
-      const formData = new FormData(event.currentTarget);
-
-      const parseTime = (value: FormDataEntryValue | null): Timestamp | undefined => {
-        const str = (value as string) || '';
-        if (!str) return undefined;
-        const [hh, mm] = str.split(':').map((n) => parseInt(n || '0', 10));
-        const d = new Date();
-        d.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
-        return Timestamp.fromDate(d);
-      };
-      
-      const newLocation: Omit<ClientLocationFull, 'id'> = {
-        locationName: formData.get('locationName') as string,
-        locationType: config.multipleLocations 
-          ? formData.get('locationType') as LocationType 
-          : LocationType.SINGLE_LOCATION,
-        locationAddress: formData.get('locationAddress') as string, // Use locationAddress as the main address
-        locationPostcode: formData.get('locationPostcode') as string,
-        locationNotes: (formData.get('locationNotes') as string) || undefined,
-        arriveTime: parseTime(formData.get('arriveTime')),
-        leaveTime: parseTime(formData.get('leaveTime')),
-        nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
-        nextLocationTravelArrangements: (formData.get('travelArrangements') as string) || undefined,
-      };
-
-      // Generate a temporary ID for the new location so it can be edited/deleted
-      const tempLocation: ClientLocationFull = {
-        ...newLocation,
-        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      };
-      
-      // Add to local state first, then save
-      const updatedItems = [...items, tempLocation];
-      onUpdate(updatedItems);
-      setIsModalOpen(false);
-    }
-  };
-
-  const handleInlineSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isSingleFormValid) return;
-    const newLocation: Omit<ClientLocationFull, 'id'> = {
-      locationName: singleForm.locationName.trim(),
-      locationType: LocationType.SINGLE_LOCATION,
-      locationAddress: singleForm.locationAddress.trim(), // Use locationAddress as the main address
-      locationPostcode: singleForm.locationPostcode.trim(),
-      locationNotes: singleForm.locationNotes.trim() || undefined,
-      arriveTime: undefined,
-      leaveTime: undefined,
-      nextLocationTravelTimeEstimate: undefined,
-      nextLocationTravelArrangements: undefined,
-    };
-    
-    // Generate a temporary ID for the new location so it can be edited/deleted
-    const tempLocation: ClientLocationFull = {
-      ...newLocation,
-      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    };
-    
-    // Add to local state first, then save
-    const updatedItems = [...items, tempLocation];
-    onUpdate(updatedItems);
-    
-    // Reset the form
-    setSingleForm({
-      locationName: '',
-      locationAddress: '',
-      locationPostcode: '',
-      locationNotes: '',
-      arriveTime: null,
-      leaveTime: null,
-      nextLocationTravelTimeEstimate: null,
-      nextLocationTravelArrangements: null,
-    });
-  };
-
-  
-  return (
-    <section aria-labelledby="locations-heading">
-      <div className="text-center mb-6">
-        <h2 id="locations-heading" style={t.titleLarge}>
-          Wedding Locations
-          {config.status === 'locked' && <span className="ml-2 text-sm font-normal text-orange-600">(Locked)</span>}
-          {config.status === 'finalized' && <span className="ml-2 text-sm font-normal text-green-600">(Finalized)</span>}
-        </h2>
-        <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
-          Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.
-        </p>
-        
-        {/* Finalized state */}
-        {isSectionLocked ? (
-          <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-md mx-auto">
-            <p className="font-semibold">
-              {config.status === 'locked' ? 'This section has been locked by your photographer and can no longer be edited.' : 'This section has been finalized by your photographer and can no longer be edited.'}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Multiple Locations toggle when allowed */}
-            {/* {showMultipleToggle && (
-              <div className="mt-3 flex justify-center">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="form-checkbox"
-                    checked={false}
-                    onChange={(e) => onSetMultipleLocations(e.target.checked)}
-                  />
-                  <span>Multiple Locations</span>
-                </label>
-              </div>
-            )} */}
-
-            {/* Add button only when multiple locations workflow */}
-            {config.multipleLocations && (
-              <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
-            )}
-          </>
-        )}
-      </div>
-      
-      {/* Inline single-location form when multipleLocations=false and none exist */}
-      {showInlineSingleForm && !isSectionLocked && (
-        <form onSubmit={handleInlineSubmit} className="max-w-3xl mx-auto space-y-4">
-          <div>
-            <label htmlFor="single_locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-            <input id="single_locationName" className="form-input" value={singleForm.locationName} onChange={(e) => setSingleForm({ ...singleForm, locationName: e.target.value })} placeholder="e.g., Manor House" />
-          </div>
-          <div>
-            <label htmlFor="single_address" className="block text-sm font-medium text-gray-700">Address (required)</label>
-            <input id="single_address" className="form-input" value={singleForm.locationAddress} onChange={(e) => setSingleForm({ ...singleForm, locationAddress: e.target.value })} />
-          </div>
-          {/* <div>
-            <label htmlFor="single_address2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
-            <input id="single_address2" className="form-input" value={singleForm.locationAddress2} onChange={(e) => setSingleForm({ ...singleForm, locationAddress2: e.target.value })} />
-          </div> */}
-          <div>
-            <label htmlFor="single_postcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
-            <input id="single_postcode" className="form-input" value={singleForm.locationPostcode} onChange={(e) => setSingleForm({ ...singleForm, locationPostcode: e.target.value })} />
-          </div>
-          <div>
-            <label htmlFor="single_notes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
-            <textarea id="single_notes" className="form-textarea" rows={2} placeholder="e.g., Parking is at the rear of the building" value={singleForm.locationNotes} onChange={(e) => setSingleForm({ ...singleForm, locationNotes: e.target.value })} />
-          </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={!isSingleFormValid}>Save Location</Button>
-          </div>
-        </form>
-      )}
-
-      <div className="space-y-4 max-w-3xl mx-auto">
-        {items && items.length > 0 ? (
-          items.map(loc => (
-            <div key={loc.id} className="rounded-md shadow-md p-5" style={{ backgroundColor: colors.surface }}>
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <SvgIcon src={getLocationIconSrc(loc.locationType)} size={28} title={loc.locationType} />
-                  <h3 style={t.titleMedium}>{loc.locationName}</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {config.multipleLocations && (
-                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" 
-                          style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>
-                      {loc.locationType}
-                    </span>
-                  )}
-                  {!isSectionLocked && isLocallyAdded(loc.id) && (
-                    <>
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => handleEdit(loc.id)}
-                        className="text-xs px-2 py-1"
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => onDelete(loc.id)}
-                        className="text-xs px-2 py-1"
-                      >
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-              <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress}</p>
-              {loc.locationNotes && (
-                <p className="text-sm mt-2" style={t.onSurfaceVariant.bodySmall}>
-                  Notes: {loc.locationNotes}
-                </p>
-              )}
-              {config.multipleLocations && (loc.arriveTime || loc.leaveTime) && (
-                <div className="flex space-x-4 mt-2 text-sm" style={t.onSurfaceVariant.bodySmall}>
-                  {loc.arriveTime && 'toDate' in loc.arriveTime && (
-                    <span>
-                      Arrive: <strong>{loc.arriveTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
-                    </span>
-                  )}
-                  {loc.leaveTime && 'toDate' in loc.leaveTime && (
-                    <span>
-                      Leave: <strong>{loc.leaveTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
-                    </span>
-                  )}
-                </div>
-              )}
-              {/* Display Travel Info */}
-              {(loc.nextLocationTravelTimeEstimate || loc.nextLocationTravelArrangements) && (
-                <div className="mt-3 pt-3 border-t" style={{ borderColor: colors.outline }}>
-                  <p className="font-semibold" style={t.onSurfaceVariant.bodyMedium}>Travel to Next Location:</p>
-                  {loc.nextLocationTravelTimeEstimate && (
-                    <p style={t.onSurfaceVariant.bodySmall}>Est. Time: {loc.nextLocationTravelTimeEstimate} minutes</p>
-                  )}
-                  {loc.nextLocationTravelArrangements && (
-                    <p style={t.onSurfaceVariant.bodySmall}>Arrangements: {loc.nextLocationTravelArrangements}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="text-center" style={t.onSurfaceVariant.bodyMedium}>No locations added yet.</p>
-        )}
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => {
-        setIsModalOpen(false);
-        setEditingLocationId(null);
-        setSingleForm({
-          locationName: '',
-          locationAddress: '',
-          locationPostcode: '',
-          locationNotes: '',
-          arriveTime: null,
-          leaveTime: null,
-          nextLocationTravelTimeEstimate: null,
-          nextLocationTravelArrangements: null,
-        });
-      }} title={editingLocationId ? "Edit Location" : "Add Location"}>
-        <form onSubmit={handleSubmit}>
-          {/* Location Type first when multiple locations */}
-          {config.multipleLocations && (
-            <div className="mb-4">
-              <label htmlFor="locationType" className="block text-sm font-medium text-gray-700">Location Type</label>
-              <div className="flex items-center gap-2">
-                <SvgIcon src={getLocationIconSrc(selectedType)} size={20} title={selectedType} />
-                <select id="locationType" name="locationType" required className="form-select" onChange={(e)=>setSelectedType(e.target.value as LocationType)}>
-                  {Object.values(LocationType).filter(t => t !== LocationType.SINGLE_LOCATION).map(type => 
-                    <option key={type} value={type}>{type}</option>
-                  )}
-                </select>
-              </div>
-            </div>
-          )}
-
-          <div className="mb-4">
-            <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-            <input 
-              type="text" 
-              id="locationName" 
-              name="locationName" 
-              required 
-              placeholder="e.g., Manor House" 
-              className="form-input"
-              value={editingLocationId ? singleForm.locationName : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationName: e.target.value})}
-            />
-          </div>
-            
-          <div className="mb-4">
-            <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address (required)</label>
-            <input 
-              type="text" 
-              id="locationAddress" 
-              name="locationAddress" 
-              required 
-              className="form-input"
-              value={editingLocationId ? singleForm.locationAddress : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress: e.target.value})}
-            />
-          </div>
-          
-          {/* <div className="mb-4">
-            <label htmlFor="locationAddress2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
-            <input 
-              type="text" 
-              id="locationAddress2" 
-              name="locationAddress2" 
-              className="form-input"
-              value={editingLocationId ? singleForm.locationAddress2 : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationAddress2: e.target.value})}
-            />
-          </div> */}
-          
-          <div className="mb-4">
-            <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
-            <input 
-              type="text" 
-              id="locationPostcode" 
-              name="locationPostcode" 
-              required 
-              className="form-input"
-              value={editingLocationId ? singleForm.locationPostcode : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationPostcode: e.target.value})}
-            />
-          </div>
-          
-          {/* Conditionally render Arrive/Leave times */}
-          {config.multipleLocations && (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label htmlFor="arriveTime" className="block text-sm font-medium text-gray-700">Arrive Time</label>
-              <input type="time" id="arriveTime" name="arriveTime" className="form-input" />
-              </div>
-              <div>
-                <label htmlFor="leaveTime" className="block text-sm font-medium text-gray-700">Leave Time</label>
-                <input type="time" id="leaveTime" name="leaveTime" className="form-input" />
-              </div>
-            </div>
-          )}
-          
-          {/* Travel Info Fields */}
-          {config.multipleLocations && (
-            <>
-              <hr className="my-4" />
-               <div className="mb-4">
-                <label htmlFor="travelTime" className="block text-sm font-medium text-gray-700">Travel Time to Next Location (minutes)</label>
-                <input 
-                  type="number" 
-                  id="travelTime" 
-                  name="travelTime" 
-                  min={0} 
-                  step={5} 
-                  placeholder="e.g., 25" 
-                  className="form-input"
-                  value={editingLocationId ? (singleForm.nextLocationTravelTimeEstimate || '') : ''}
-                  onChange={(e) => editingLocationId && setSingleForm({...singleForm, nextLocationTravelTimeEstimate: Number(e.target.value) || null})}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="travelArrangements" className="block text-sm font-medium text-gray-700">Travel Arrangements</label>
-                <textarea 
-                  id="travelArrangements" 
-                  name="travelArrangements" 
-                  rows={2} 
-                  placeholder="e.g., Guests will drive, couple has a limo" 
-                  className="form-textarea"
-                  value={editingLocationId ? (singleForm.nextLocationTravelArrangements || '') : ''}
-                  onChange={(e) => editingLocationId && setSingleForm({...singleForm, nextLocationTravelArrangements: e.target.value})}
-                ></textarea>
-              </div>
-            </>
-          )}
-          
-          <div className="mb-4">
-            <label htmlFor="locationNotes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
-            <textarea 
-              id="locationNotes" 
-              name="locationNotes" 
-              rows={2} 
-              placeholder="e.g., Parking is at the rear of the building" 
-              className="form-textarea"
-              value={editingLocationId ? (singleForm.locationNotes || '') : ''}
-              onChange={(e) => editingLocationId && setSingleForm({...singleForm, locationNotes: e.target.value})}
-            ></textarea>
-          </div>
-          
-          <div className="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="secondary" onClick={() => {
-              setIsModalOpen(false);
-              setEditingLocationId(null);
-              setSingleForm({
-                locationName: '',
-                locationAddress: '',
-                locationPostcode: '',
-                locationNotes: '',
-                arriveTime: null,
-                leaveTime: null,
-                nextLocationTravelTimeEstimate: null,
-                nextLocationTravelArrangements: null,
-              });
-            }}>Cancel</Button>
-            <Button type="submit">{editingLocationId ? 'Update Location' : 'Save Location'}</Button>
-          </div>
-        </form>
-      </Modal>
-    </section>
-  );
+    arriveTime: null,
+    leaveTime: null,
+    nextLocationTravelTimeEstimate: 0,
+    nextLocationTravelArrangements: '',
 };
-// 'use client';
 
-// import React, { useState } from 'react';
-// import { Button } from '../ui/Button';
-// import { Modal } from '../ui/Modal';
-// import { ClientLocationFull, LocationConfig, LocationType } from '@/types';
+const EmptyState = () => (
+    <div className="text-center py-12 px-6 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+        <MapPin className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <h3 className="mt-4 text-lg font-serif text-foreground">No Locations Added Yet</h3>
+        <p className="mt-1 text-sm font-sans text-muted-foreground">Click the &quot;Add Location&quot; button to get started.</p>
+    </div>
+);
 
-// interface LocationsSectionProps {
-//   config: LocationConfig;
-//   items: ClientLocationFull[];
-//   onAddLocation: (location: Omit<ClientLocationFull, 'id'>) => void;
-// }
+export const LocationsSection: React.FC = () => {
+    const { locations, updateLocations } = usePortalStore();
+    const [formState, setFormState] = useState(emptyLocation);
+    const [showActionRequired, setShowActionRequired] = useState(true);
 
-// export const LocationsSection = ({ config, items, onAddLocation }: LocationsSectionProps) => {
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-
-//   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-//     event.preventDefault();
-//     const formData = new FormData(event.currentTarget);
+    const isLocked = locations?.config?.locked || locations?.config?.finalized;
+    const isFinalized = locations?.config?.finalized;
+    const actionOn = isLocked ? ActionOn.PHOTOGRAPHER : ActionOn.CLIENT;
     
-//     const newLocation: Omit<ClientLocationFull, 'id'> = {
-//       locationName: formData.get('locationName') as string,
-//       locationType: config.multipleLocations 
-//         ? formData.get('locationType') as LocationType 
-//         : LocationType.SINGLE_LOCATION,
-//       locationAddress: formData.get('locationAddress') as string,  
-//       locationPostcode: formData.get('locationPostcode') as string,
-//       locationNotes: formData.get('locationNotes') as string,
-//       arriveTime: formData.get('arriveTime') as string,
-//       leaveTime: formData.get('leaveTime') as string,
-//       nextLocationTravelTimeEstimate: Number(formData.get('travelTime')) || undefined,
-//       nextLocationTravelArrangements: formData.get('travelArrangements') as string || undefined,
-//     };
+    const {
+        isModalOpen,
+        editingEntity,
+        openAddModal,
+        openEditModal,
+        closeModal,
+        handleDelete,
+        handleSave,
+    } = useEntityManagement(locations?.items || [], (newItems) => {
+        if (locations) {
+            updateLocations({ ...locations, items: newItems });
+        }
+    });
 
-//     onAddLocation(newLocation);
-//     setIsModalOpen(false);
-//   };
+    useEffect(() => {
+        if (editingEntity) {
+            setFormState({
+                ...editingEntity,
+                nextLocationTravelTimeEstimate: editingEntity.nextLocationTravelTimeEstimate || 0,
+                nextLocationTravelArrangements: editingEntity.nextLocationTravelArrangements || '',
+            });
+        } else {
+            setFormState(emptyLocation);
+        }
+    }, [editingEntity]);
 
-//   return (
-//     <section aria-labelledby="locations-heading">
-//       <div className="text-center mb-6">
-//         <h2 id="locations-heading" className="text-2xl font-bold text-gray-800">Wedding Locations</h2>
-//         <p className="mt-2 text-gray-600 max-w-2xl mx-auto">Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.</p>
-        
-//         {/* Show a finalized message or the add button */}
-//         {config.finalized ? (
-//           <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-md mx-auto">
-//             <p className="font-semibold">This section has been finalized by your photographer and can no longer be edited.</p>
-//           </div>
-//         ) : (
-//           <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
-//         )}
-//       </div>
-      
-//       <div className="space-y-4 max-w-3xl mx-auto">
-//         {items && items.length > 0 ? (
-//           items.map(loc => (
-//             <div key={loc.id} className="bg-white rounded-lg shadow-md p-5">
-//               <div className="flex justify-between items-start">
-//                 <h3 className="text-xl font-bold text-gray-800">{loc.locationName}</h3>
-//                 {config.multipleLocations && (
-//                     <span className="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{loc.locationType}</span>
-//                 )}
-//               </div>
-//               <p className="text-gray-600 mt-1">{loc.locationAddress}</p>  
-//               {loc.locationNotes && <p className="text-sm text-gray-500 mt-2">Notes: {loc.locationNotes}</p>}
-//               {config.multipleLocations && (loc.arriveTime || loc.leaveTime) && (
-//                 <div className="flex space-x-4 mt-2 text-sm text-gray-700">
-//                     {loc.arriveTime && <span>Arrive: <strong>{loc.arriveTime}</strong></span>}
-//                     {loc.leaveTime && <span>Leave: <strong>{loc.leaveTime}</strong></span>}
-//                 </div>
-//               )}
-//               {/* --- NEW: Display Travel Info --- */}
-//               {(loc.nextLocationTravelTimeEstimate || loc.nextLocationTravelArrangements) && (
-//                 <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
-//                   <p className="font-semibold text-gray-700">Travel to Next Location:</p>
-//                   {loc.nextLocationTravelTimeEstimate && <p className="text-gray-600">Est. Time: {loc.nextLocationTravelTimeEstimate} minutes</p>}
-//                   {loc.nextLocationTravelArrangements && <p className="text-gray-600">Arrangements: {loc.nextLocationTravelArrangements}</p>}
-//                 </div>
-//               )}
-//             </div>
-//           ))
-//         ) : (
-//           <p className="text-gray-500 text-center">No locations added yet.</p>
-//         )}
-//       </div>
+    if (!locations) return <div>Loading...</div>;
 
-//       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Location">
-//         <form onSubmit={handleSubmit}>
-//             <div className="mb-4">
-//                 <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-//                 <input type="text" id="locationName" name="locationName" required placeholder="e.g., Manor House" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//             </div>
-//             {/* Conditionally render the Location Type dropdown */}
-//             {config.multipleLocations && (
-//               <div className="mb-4">
-//                   <label htmlFor="locationType" className="block text-sm font-medium text-gray-700">Location Type</label>
-//                   <select id="locationType" name="locationType" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
-//                       {Object.values(LocationType).filter(t => t !== LocationType.SINGLE_LOCATION).map(type => <option key={type} value={type}>{type}</option>)}
-//                   </select>
-//               </div>
-//             )}
-//             <div className="mb-4">
-//                 <label htmlFor="locationAddress1" className="block text-sm font-medium text-gray-700">Address Line 1 (required)</label>
-//                 <input type="text" id="locationAddress1" name="locationAddress1" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//             </div>
-//             <div className="mb-4">
-//                 <label htmlFor="locationAddress2" className="block text-sm font-medium text-gray-700">Address Line 2</label>
-//                 <input type="text" id="locationAddress2" name="locationAddress2" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//             </div>
-//             <div className="mb-4">
-//                 <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode (required)</label>
-//                 <input type="text" id="locationPostcode" name="locationPostcode" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//             </div>
-//             {/* Conditionally render Arrive/Leave times */}
-//             {config.multipleLocations && (
-//               <div className="grid grid-cols-2 gap-4 mb-4">
-//                 <div>
-//                   <label htmlFor="arriveTime" className="block text-sm font-medium text-gray-700">Arrive Time</label>
-//                   <input type="time" id="arriveTime" name="arriveTime" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//                 </div>
-//                 <div>
-//                   <label htmlFor="leaveTime" className="block text-sm font-medium text-gray-700">Leave Time</label>
-//                   <input type="time" id="leaveTime" name="leaveTime" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//                 </div>
-//               </div>
-//             )}
-//             {/* --- NEW: Add Travel Info Fields to Modal --- */}
-//             {config.multipleLocations && (
-//               <>
-//                 <hr className="my-4" />
-//                 <div className="mb-4">
-//                   <label htmlFor="travelTime" className="block text-sm font-medium text-gray-700">Travel Time to Next Location (minutes)</label>
-//                   <input type="number" id="travelTime" name="travelTime" placeholder="e.g., 25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//                 </div>
-//                 <div className="mb-4">
-//                   <label htmlFor="travelArrangements" className="block text-sm font-medium text-gray-700">Travel Arrangements</label>
-//                   <textarea id="travelArrangements" name="travelArrangements" rows={2} placeholder="e.g., Guests will drive, couple has a limo" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-//                 </div>
-//               </>
-//             )}
-//             <div className="mb-4">
-//                 <label htmlFor="locationNotes" className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
-//                 <textarea id="locationNotes" name="locationNotes" rows={2} placeholder="e.g., Parking is at the rear of the building" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-//             </div>
-//             <div className="flex justify-end space-x-3 mt-6">
-//                 <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-//                 <Button type="submit">Save Location</Button>
-//             </div>
-//         </form>
-//       </Modal>
-//     </section>
-//   );
-// };
+    const isMultiLocation = locations.config.multipleLocations;
 
-// // 'use client';
+    return (
+        <div className="max-w-6xl mx-auto px-2">
+            {/* Header Section */}
+            <div className="text-center mb-4">
+                <h1 className="text-3xl md:text-4xl font-serif mb-4">
+                    Locations
+                </h1>
+                <p className="text-lg md:text-xl font-sans font-medium mb-4 max-w-lg mx-auto">
+                    Add the key locations for your wedding day.
+                </p>
+                {isFinalized && (
+                    <Alert variant="success" className="max-w-3xl mx-auto mb-4">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertTitle>This section has been finalized.</AlertTitle>
+                        <AlertDescription>
+                            Please contact your photographer if further changes are required.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {isLocked && !isFinalized && actionOn === ActionOn.PHOTOGRAPHER && (
+                    <Alert variant="warning" className="max-w-3xl mx-auto mb-4">
+                        <Lock className="h-4 w-4" />
+                        <AlertTitle>This section is locked for review.</AlertTitle>
+                        <AlertDescription>
+                            Your photographer is reviewing the details. Please contact them if changes are needed.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {actionOn === ActionOn.CLIENT && !isLocked && !isFinalized && showActionRequired && (
+                    <Alert variant="default" className="max-w-3xl mx-auto mb-4 text-left relative py-2">
+                        {/* <UserCheck className="h-4 w-4" /> */}
+                        <AlertTitle>Action Required</AlertTitle>
+                        <AlertDescription>Please add your locations.</AlertDescription>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                            onClick={() => setShowActionRequired(false)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </Alert>
+                )}
+            </div>
+            <div className="flex justify-center mb-6">
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="multipleLocations"
+                            checked={isMultiLocation}
+                            onCheckedChange={(checked) => updateLocations({ ...locations, config: { ...locations.config, multipleLocations: !!checked }})}
+                            disabled={isLocked}
+                        />
+                        <Label htmlFor="multipleLocations" className="font-sans">Multiple locations</Label>
+                    </div>
+                    <Button onClick={openAddModal} disabled={isLocked} size="sm" className="text-lg h-8 tracking-wide">
+                        Add Location
+                    </Button>
+                </div>
+            </div>
 
-// // import { SvgIcon } from '@/components/ui/Icon';
-// // import { getLocationIconSrc } from '@/lib/iconMaps';
-// // import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
-// // import { LocationFull, LocationType } from '@/types';
-// // import React, { useState } from 'react';
-// // import { v4 as uuidv4 } from 'uuid';
-// // import { Button } from '../ui/Button';
-// // import { Modal } from '../ui/Modal';
-// // // Validation handled inline without external libs
+            {locations.items.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {locations.items.map((location) => (
+                        <Card key={location.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-center font-serif text-2xl">{location.locationName}</CardTitle>
+                                <div className="flex items-center space-x-2">
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        onClick={() => openEditModal(location)}
+                                        disabled={isLocked}
+                                        className="w-6 h-6 rounded-full"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        onClick={() => handleDelete(location.id)}
+                                        disabled={isLocked}
+                                        className="w-6 h-6 rounded-full"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <CardContent className="py-0 px-0">
+                                <CardDescription className="font-sans text-lg font-medium">
+                                    {location.locationType}
+                                </CardDescription>
+                            </CardContent>
+                            <CardFooter className="justify-start px-0">
+                                {location.locationAddress1 && (
+                                    <p className="text-sm font-sans text-muted-foreground">
+                                        {location.locationAddress1}
+                                    </p>
+                                )}
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <EmptyState />
+            )}
+            
+            <AddEditModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                onSave={() => handleSave(formState)}
+                entity={formState}
+                title={editingEntity ? 'Edit Location' : 'Add New Location'}
+                isLocked={isLocked || false}
+            >
+                <div className="space-y-2">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="locationType" className="font-sans text-xs text-muted-foreground">Location Type *</Label>
+                        <Select value={formState.locationType} onValueChange={(value) => setFormState({ ...formState, locationType: value as LocationType })}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.values(LocationType).map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-0.5">
+                        <Label htmlFor="locationName" className="font-sans text-xs text-muted-foreground">Location Name *</Label>
+                        <Input id="locationName" value={formState.locationName} onChange={(e) => setFormState({ ...formState, locationName: e.target.value })} required placeholder="Wedding Venue" />
+                    </div>                        
+                    <div className="space-y-0.5">
+                        <Label htmlFor="locationAddress1" className="font-sans text-xs text-muted-foreground">Address *</Label>
+                        <Input id="locationAddress1" value={formState.locationAddress1} onChange={(e) => setFormState({ ...formState, locationAddress1: e.target.value })} required placeholder="123 Main Street" />
+                    </div>
+                    <div className="space-y-0.5">
+                        <Label htmlFor="locationPostcode" className="font-sans text-xs text-muted-foreground">Postcode *</Label>
+                        <Input id="locationPostcode" value={formState.locationPostcode} onChange={(e) => setFormState({ ...formState, locationPostcode: e.target.value })} required placeholder="SW1A 1AA" />
+                    </div>
 
-// // interface LocationsSectionProps {
-// //   locations: LocationFull[];
-// //   onAddLocation: (location: LocationFull) => void;
-// // }
+                    {isMultiLocation && (
+                        <>
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="arriveTime" className="font-sans text-xs text-muted-foreground">Arrive Time *</Label>
+                                    <Input type="time" id="arriveTime" value={timestampToTimeString(formState.arriveTime)} onChange={(e) => setFormState({ ...formState, arriveTime: timeStringToTimestamp(e.target.value) })} />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="leaveTime" className="font-sans text-xs text-muted-foreground">Leave Time *</Label>
+                                    <Input type="time" id="leaveTime" value={timestampToTimeString(formState.leaveTime)} onChange={(e) => setFormState({ ...formState, leaveTime: timeStringToTimestamp(e.target.value) })} />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="nextLocationTravelTimeEstimate" className="font-sans text-xs text-muted-foreground">Travel Time</Label>
+                                    <Input type="number" id="nextLocationTravelTimeEstimate" value={formState.nextLocationTravelTimeEstimate} onChange={(e) => setFormState({ ...formState, nextLocationTravelTimeEstimate: parseInt(e.target.value, 10) || 0 })} placeholder="e.g., 30" />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-0.5">
+                                <Label htmlFor="nextLocationTravelArrangements" className="font-sans text-xs text-muted-foreground">Travel Arrangements</Label>
+                                <Textarea id="nextLocationTravelArrangements" value={formState.nextLocationTravelArrangements} onChange={(e) => setFormState({ ...formState, nextLocationTravelArrangements: e.target.value })} placeholder="Walking distance" />
+                            </div>
+                        </>
+                    )}
 
-// // export const LocationsSection = ({ locations, onAddLocation }: LocationsSectionProps) => {
-// //   const [isModalOpen, setIsModalOpen] = useState(false);
-// //   const [multipleLocations, setMultipleLocations] = useState(false);
-// //   const colors = useAppThemeColors();
-// //   const t = useTypography();
+                    {/* <div className="space-y-0.5">
+                        <Label htmlFor="locationNotes" className="font-sans text-xs text-muted-foreground">Notes</Label>
+                        <Textarea id="locationNotes" value={formState.locationNotes || ''} onChange={(e) => setFormState({ ...formState, locationNotes: e.target.value })} placeholder="e.g., Parking instructions" />
+                    </div> */}
+                </div>
+            </AddEditModal>
+        </div>
+    );
+};
 
-// //   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-// //     event.preventDefault();
-// //     const formData = new FormData(event.currentTarget);
-
-// //     // If no existing locations, we are in "single location" quick form mode
-// //     if (!locations || locations.length === 0) {
-// //       const address1 = String(formData.get('locationAddress') || '').trim();
-// //       const postcode = String(formData.get('locationPostcode') || '').trim();
-// //       const notes = String(formData.get('locationNotes') || '').trim();
-
-// //       const errors: string[] = [];
-// //       if (!address1) errors.push('Address is required');
-// //       if (!postcode) errors.push('Postcode is required');
-// //       if (errors.length) {
-// //         alert(errors.join('\n'));
-// //         return;
-// //       }
-
-// //       const newLocation: LocationFull = {
-// //         id: `location_${uuidv4()}`,
-// //         locationType: LocationType.SINGLE_LOCATION,
-// //         locationName: 'Single Location',
-// //         locationAddress: `${address1} (${postcode})${notes ? ' - ' + notes : ''}`,  
-// //       };
-
-// //       onAddLocation(newLocation);
-// //     } else {
-// //       // Use the existing detailed form
-// //       const newLocation: LocationFull = {
-// //         id: `location_${uuidv4()}`,
-// //         locationName: formData.get('locationName') as string,
-// //         locationType: formData.get('locationType') as LocationType,
-// //         locationAddress: formData.get('locationAddress') as string, 
-// //       };
-
-// //       onAddLocation(newLocation);
-// //     }
-// //     setIsModalOpen(false);
-// //   };
-
-// //   return (
-// //     <section aria-labelledby="locations-heading">
-// //       <div className="text-center mb-6">
-// //         <h2 id="locations-heading" style={t.titleLarge}>Wedding Locations</h2>
-// //         <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
-// //           Add the key locations for your wedding day, like the ceremony venue, reception hall, and photo spots.
-// //         </p>
-// //         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Location</Button>
-// //       </div>
-
-// //       <div className="space-y-4 max-w-3xl mx-auto">
-// //         {locations && locations.length > 0 ? (
-// //           locations.map(loc => (
-// //             <div key={loc.id} className="rounded-lg shadow-md p-5" style={{ backgroundColor: colors.surface }}>
-// //               <div className="flex justify-between items-start">
-// //                 <div className="flex items-center gap-3">
-// //                   <SvgIcon src={getLocationIconSrc(loc.locationType)} size={28} title={loc.locationType} />
-// //                   <h3 style={t.titleMedium}>{loc.locationName}</h3>
-// //                 </div>
-// //                 <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full" style={{ backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }}>{loc.locationType}</span>
-// //               </div>
-// //               <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{loc.locationAddress}</p>
-// //             </div>
-// //           ))
-// //         ) : (
-// //           <p className="text-gray-500 text-center">No locations added yet.</p>
-// //         )}
-// //       </div>
-
-// //       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Location">
-// //         <form onSubmit={handleSubmit}>
-// //           {/* Multiple Locations toggle at top, initially unchecked */}
-// //           <div className="mb-4 flex items-center gap-2">
-// //             <input
-// //               id="multipleLocations"
-// //               name="multipleLocations"
-// //               type="checkbox"
-// //               checked={multipleLocations}
-// //               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMultipleLocations(e.target.checked)}
-// //               className="h-4 w-4 rounded border-gray-300 text-[#4A90E2] focus:ring-[#4A90E2]"
-// //             />
-// //             <label htmlFor="multipleLocations" className="text-sm font-medium text-gray-700">Multiple Locations</label>
-// //           </div>
-
-// //           {/* If no location exists, show the Single Location minimal form */}
-// //           {(!locations || locations.length === 0) ? (
-// //             <>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address</label>
-// //                 <input type="text" id="locationAddress" name="locationAddress" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-// //               </div>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationPostcode" className="block text-sm font-medium text-gray-700">Postcode</label>
-// //                 <input type="text" id="locationPostcode" name="locationPostcode" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-// //               </div>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationNotes" className="block text-sm font-medium text-gray-700">Notes (optional)</label>
-// //                 <textarea id="locationNotes" name="locationNotes" rows={2} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-// //               </div>
-// //             </>
-// //           ) : (
-// //             <>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">Location Name</label>
-// //                 <input type="text" id="locationName" name="locationName" required placeholder="e.g., Manor House" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-// //               </div>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationType" className="block text-sm font-medium text-gray-700">Location Type</label>
-// //                 <select id="locationType" name="locationType" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
-// //                   {Object.values(LocationType).map(type => <option key={type} value={type}>{type}</option>)}
-// //                 </select>
-// //               </div>
-// //               <div className="mb-4">
-// //                 <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700">Address / Notes</label>  
-// //                 <textarea id="locationAddress" name="locationAddress" rows={2} required placeholder="e.g., 123 Country Lane, Chepstow" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-// //               </div>
-// //             </>
-// //           )}
-
-// //           <div className="flex justify-end space-x-3 mt-6">
-// //             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-// //             <Button type="submit">Save Location</Button>
-// //           </div>
-// //         </form>
-// //       </Modal>
-// //     </section>
-// //   );
-// // };

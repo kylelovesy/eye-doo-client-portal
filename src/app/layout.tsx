@@ -1,54 +1,59 @@
-import { ClientProvider } from "@/components/ClientProvider";
-import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
-import React from "react";
-import "./globals.css";
+import { ThemeProvider } from '../components/theme-provider';
+import type { Metadata } from 'next';
+import { Playfair_Display, Montserrat, Geist_Mono } from 'next/font/google';
+// import { GeistMono } from 'geist/font/mono';
+// import { cn } from '@/lib/utils';
+import './globals.css';
 
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
-const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-serif" });
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"]
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Client Planning Portal",
-  description: "A portal for wedding photography clients.",
+  title: 'Client Planning Portal',
+  description: 'Plan your perfect day with us.',
 };
+
+
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-return (
-  <html lang="en" suppressHydrationWarning>
-    <body className={`${plusJakarta.variable} ${playfair.variable}`}>
-      <ClientProvider>{children}</ClientProvider>
-    </body>
-  </html>
-);
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>      
+      {/* <body
+        className={cn(
+          'min-h-screen font-sans antialiased', // Set default font-sans here
+          GeistMono.variable,
+          playfair.variable,
+          lato.variable
+        )}
+      > */}
+      <body
+        className={`${geistMono.variable} ${playfair.variable} ${montserrat.variable} min-h-screen font-sans antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }
-// import { ClientProvider } from "@/components/ClientProvider";
-// import type { Metadata } from "next";
-// import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
-// import React from "react";
-// import "./globals.css";
 
-// const plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
-// const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-serif" });
-
-// export const metadata: Metadata = {
-//   title: "Client Planning Portal",
-//   description: "A portal for wedding photography clients.",
-// };
-
-// export default function RootLayout({
-//   children,
-// }: Readonly<{
-//   children: React.ReactNode;
-// }>) {
-// return (
-//   <html lang="en" suppressHydrationWarning>
-//     <body className={`${plusJakarta.variable} ${playfair.variable}`}>
-//       <ClientProvider>{children}</ClientProvider>
-//     </body>
-//   </html>
-// );
-// }

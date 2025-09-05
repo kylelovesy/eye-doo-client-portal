@@ -1,34 +1,22 @@
-"use client";
+// src/lib/useUnsavedChangesPrompt.ts
+import { useEffect } from 'react';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export function useUnsavedChangesPrompt(enabled: boolean, message = "You have unsaved changes. Leave this page?") {
-  const router = useRouter();
-
+const useUnsavedChangesPrompt = (isDirty: boolean) => {
   useEffect(() => {
-    if (!enabled) return;
-
-    const beforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = message;
-      return message;
-    };
-
-    const onPopState = () => {
-      if (enabled && !confirm(message)) {
-        history.pushState(null, "", window.location.href);
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty) {
+        event.preventDefault();
+        // Modern browsers show a generic message, but this is required for legacy support.
+        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
       }
     };
 
-    window.addEventListener("beforeunload", beforeUnload);
-    window.addEventListener("popstate", onPopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("beforeunload", beforeUnload);
-      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [enabled, message, router]);
-}
+  }, [isDirty]);
+};
 
-
+export default useUnsavedChangesPrompt;

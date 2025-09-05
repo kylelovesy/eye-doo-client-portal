@@ -1,400 +1,213 @@
-'use client';
+import React, { useState, useEffect } from 'react';
+import { usePortalStore } from '../../store/usePortalStore';
+import { ClientTimelineEvent, TimelineEventType, ActionOn } from '../../types/types';
+import { useEntityManagement } from '../../lib/useEntityManagement';
+import { AddEditModal } from '../ui/AddEditModal';
+import { Button } from '../ui/button';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { Card, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Trash2, ListChecks, CheckCircle, Lock, Pencil, X } from 'lucide-react';
+import { timestampToTimeString, timeStringToTimestamp } from '../../lib/utils'; 
 
-import React, { useState } from 'react';
-// import { v4 as uuidv4 } from 'uuid';
-import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
-import { ClientTimelineEventFull, TimelineConfig, TimelineEventType } from '@/types';
-import { Timestamp } from 'firebase/firestore';
-import { SvgIcon } from '@/components/ui/Icon';
-import { getTimelineEventIconSrc } from '@/lib/iconMaps';
-
-
-interface TimelineSectionProps {
-  config: TimelineConfig;
-  items: ClientTimelineEventFull[];
-  onAddEvent: (event: Omit<ClientTimelineEventFull, 'id'>) => void;
-  onUpdate: (updatedItems: ClientTimelineEventFull[]) => void;
-  onDelete: (id: string) => void;
-}
-
-export const TimelineSection = ({ config, items, onUpdate, onDelete }: TimelineSectionProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<TimelineEventType>(Object.values(TimelineEventType)[0]);
-  const [editForm, setEditForm] = useState({
-    eventName: '',
-    eventType: Object.values(TimelineEventType)[0] as TimelineEventType,
-    eventTime: '',
-    duration: 0,
-    eventNotes: '',
-  });
-
-  // Check if section is locked or finalized
-  const isSectionLocked = config.finalized || config.status === 'locked' || config.status === 'finalized';
-
-  // Helper function to check if an item is locally added (unsaved)
-  const isLocallyAdded = (id: string) => {
-    return id.startsWith('temp_');
-  };
-
-  const handleEditEvent = (id: string) => {
-    const eventToEdit = items.find(e => e.id === id);
-    if (eventToEdit) {
-      // Populate form with existing data
-      setEditForm({
-        eventName: eventToEdit.title,
-        eventType: eventToEdit.type,
-        eventTime: eventToEdit.startTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        duration: eventToEdit.duration,
-        eventNotes: eventToEdit.clientNotes || '',
-      });
-      setSelectedType(eventToEdit.type);
-      setEditingEventId(id);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleUpdateEvent = (updatedEvent: Omit<ClientTimelineEventFull, 'id'>) => {
-    const updatedItems = items.map(event => event.id === editingEventId ? { ...updatedEvent, id: editingEventId } : event);
-    onUpdate(updatedItems);
-    setEditingEventId(null);
-    setIsModalOpen(false);
-    resetEditForm();
-  };
-
-  const resetEditForm = () => {
-    setEditForm({
-      eventName: '',
-      eventType: Object.values(TimelineEventType)[0] as TimelineEventType,
-      eventTime: '',
-      duration: 0,
-      eventNotes: '',
-    });
-    setEditingEventId(null);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
-    if (editingEventId) {
-      // Use editForm values for editing
-      const timeStr = editForm.eventTime;
-      const [hh, mm] = timeStr.split(':').map((n) => parseInt(n || '0', 10));
-      const base = new Date();
-      base.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
-
-      const updatedEvent: Omit<ClientTimelineEventFull, 'id'> = {
-        title: editForm.eventName,
-        type: editForm.eventType,
-        startTime: Timestamp.fromDate(base),
-        duration: editForm.duration,
-        clientNotes: editForm.eventNotes || undefined,
-        isPhotographyRequired: true, // Default to true for timeline events
-      };
-      handleUpdateEvent(updatedEvent);
-    } else {
-      // Use form data for adding new events
-      const formData = new FormData(event.currentTarget);
-
-      // Parse HH:MM safely into today at that time (avoids Invalid Date)
-      const timeStr = String(formData.get('eventTime') || '');
-      const [hh, mm] = timeStr.split(':').map((n) => parseInt(n || '0', 10));
-      const base = new Date();
-      base.setHours(isNaN(hh) ? 0 : hh, isNaN(mm) ? 0 : mm, 0, 0);
-
-      const newEvent: Omit<ClientTimelineEventFull, 'id'> = {
-        title: formData.get('eventName') as string,
-        type: formData.get('eventType') as TimelineEventType,
-        startTime: Timestamp.fromDate(base),
-        duration: Number(formData.get('duration')) || 0,
-        clientNotes: formData.get('eventNotes') as string,
-        isPhotographyRequired: true, // Default to true for timeline events
-      };
-
-      // Generate a temporary ID for the new event so it can be edited/deleted
-      const tempEvent: ClientTimelineEventFull = {
-        ...newEvent,
-        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      };
-      
-      // Add to local state first, then save
-      const updatedItems = [...items, tempEvent];
-      onUpdate(updatedItems);
-      setIsModalOpen(false);
-    }
-  };
-
-  const sortedEvents = [...(items || [])].sort((a, b) => a.startTime.toDate().getTime() - b.startTime.toDate().getTime());
-
-  return (
-    <section aria-labelledby="timeline-heading">
-      <div className="text-center mb-6">
-        <h2 id="timeline-heading" className="font-serif text-2xl font-bold">
-          Key Events Timeline
-          {config.status === 'locked' && <span className="ml-2 text-sm font-normal text-orange-600">(Locked)</span>}
-          {config.status === 'finalized' && <span className="ml-2 text-sm font-normal text-green-600">(Finalized)</span>}
-        </h2>
-        <p className="max-w-2xl mx-auto text-gray-600 text-base mt-2">
-          Provide the main &quot;tentpole&quot; events of your day. Your photographer will use this to build a detailed final schedule.
-        </p>
-        
-        {isSectionLocked ? (
-          <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg max-w-md mx-auto">
-            <p className="font-semibold">
-              {config.status === 'locked' ? 'This section has been locked by your photographer and can no longer be edited.' : 'This section has been finalized by your photographer and can no longer be edited.'}
-            </p>
-          </div>
-        ) : (
-          <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Event</Button>
-        )}
-      </div>
-
-      <div className="max-w-3xl mx-auto">
-        {sortedEvents && sortedEvents.length > 0 ? (
-          sortedEvents.map(event => (
-            <div key={event.id} className="flex items-center p-4 rounded-lg bg-white shadow-md mb-4">
-              <div className="w-16 text-center">
-                <p className="font-bold text-lg text-primary">{event.startTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
-              <div className="flex-1 ml-4">
-                <div className="flex items-center gap-3 mb-1">
-                  <SvgIcon src={getTimelineEventIconSrc(event.type)} size={20} title={event.type} />
-                  <p className="font-bold text-gray-800">{event.title}</p>
-                </div>
-                {event.clientNotes && <p className="text-sm text-gray-600">{event.clientNotes}</p>}
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full text-center bg-gray-100 text-gray-800">{event.type}</span>
-                  {event.duration > 0 && (
-                    <span className="text-xs text-gray-500">Duration: {event.duration} min</span>
-                  )}
-                </div>
-              </div>
-              {!isSectionLocked && isLocallyAdded(event.id) && (
-                <div className="flex gap-2 ml-4">
-                  <Button 
-                    variant="secondary" 
-                    onClick={() => handleEditEvent(event.id)}
-                    className="text-xs px-2 py-1"
-                  >
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    onClick={() => onDelete(event.id)}
-                    className="text-xs px-2 py-1"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center">No events added yet.</p>
-        )}
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => {
-        setIsModalOpen(false);
-        resetEditForm();
-      }} title={editingEventId ? "Edit Timeline Event" : "Add a Timeline Event"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="eventName" className="block text-sm font-medium text-gray-700">Event Name</label>
-              <input 
-                type="text" 
-                id="eventName" 
-                name="eventName" 
-                required 
-                placeholder="e.g., Ceremony Begins" 
-                className="form-input"
-                value={editingEventId ? editForm.eventName : ''}
-                onChange={(e) => editingEventId && setEditForm({...editForm, eventName: e.target.value})}
-              />
-            </div>
-            <div>
-              <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">Event Type</label>
-              <div className="flex items-center gap-2">
-                <SvgIcon src={getTimelineEventIconSrc(selectedType)} size={20} title={selectedType} />
-                <select
-                  id="eventType"
-                  name="eventType"
-                  required
-                  className="form-select"
-                  value={editingEventId ? editForm.eventType : selectedType}
-                  onChange={(e) => {
-                    const newType = e.target.value as TimelineEventType;
-                    setSelectedType(newType);
-                    if (editingEventId) {
-                      setEditForm({...editForm, eventType: newType});
-                    }
-                  }}
-                >
-                  {Object.values(TimelineEventType).map(type => <option key={type} value={type}>{type}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="eventTime" className="block text-sm font-medium text-gray-700">Approximate Time</label>
-              <input 
-                type="time" 
-                id="eventTime" 
-                name="eventTime" 
-                step={300} 
-                required 
-                className="form-input"
-                value={editingEventId ? editForm.eventTime : ''}
-                onChange={(e) => editingEventId && setEditForm({...editForm, eventTime: e.target.value})}
-              />
-            </div>
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Duration (minutes)</label>
-              <input 
-                type="number" 
-                id="duration" 
-                name="duration" 
-                min={0} 
-                step={5} 
-                required 
-                placeholder="e.g., 60" 
-                className="form-input"
-                value={editingEventId ? editForm.duration : ''}
-                onChange={(e) => editingEventId && setEditForm({...editForm, duration: Number(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label htmlFor="eventNotes" className="block text-sm font-medium text-gray-700">Location / Notes</label>
-            <textarea 
-              id="eventNotes" 
-              name="eventNotes" 
-              rows={2} 
-              placeholder="e.g., The Oak Room" 
-              className="form-textarea"
-              value={editingEventId ? editForm.eventNotes : ''}
-              onChange={(e) => editingEventId && setEditForm({...editForm, eventNotes: e.target.value})}
-            ></textarea>
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => {
-              setIsModalOpen(false);
-              resetEditForm();
-            }}>Cancel</Button>
-            <Button type="submit">{editingEventId ? 'Update Event' : 'Save Event'}</Button>
-          </div>
-        </form>
-      </Modal>
-    </section>
-  );
+const emptyEvent: Omit<ClientTimelineEvent, 'id' | 'startTime'> = {
+    title: '',
+    type: TimelineEventType.OTHER,
+    duration: 30,
+    clientNotes: '',
+    locationId: '',
 };
 
-// 'use client';
+const EmptyState = () => (
+    <div className="text-center py-12 px-6 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+        <ListChecks className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <h3 className="mt-4 text-lg font-serif text-foreground">No Timeline Events Yet</h3>
+        <p className="mt-1 text-sm font-sans text-muted-foreground">Click the &quot;Add Event&quot; button to start building your day&apos;s schedule.</p>
+    </div>
+);
 
-// import { SvgIcon } from '@/components/ui/Icon';
-// import { getTimelineEventIconSrc } from '@/lib/iconMaps';
-// import { useAppThemeColors, useTypography } from '@/lib/useAppStyle';
-// import { TimelineEvent, TimelineEventType } from '@/types';
-// import React, { useState } from 'react';
-// import { v4 as uuidv4 } from 'uuid';
-// import { Button } from '../ui/Button';
-// import { Modal } from '../ui/Modal';
 
-// interface TimelineSectionProps {
-//   events: TimelineEvent[];
-//   onAddEvent: (event: TimelineEvent) => void;
-// }
+export const TimelineSection: React.FC = () => {
+    const { timeline, updateTimeline } = usePortalStore();
+    const [formState, setFormState] = useState(emptyEvent);
+    const [startTimeString, setStartTimeString] = useState('');
+    const [showActionRequired, setShowActionRequired] = useState(true);
 
-// export const TimelineSection = ({ events, onAddEvent }: TimelineSectionProps) => {
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const colors = useAppThemeColors();
-//   const t = useTypography();
+    const isLocked = timeline?.config?.locked || timeline?.config?.finalized;
+    const isFinalized = timeline?.config?.finalized;
+    const actionOn = isLocked ? ActionOn.PHOTOGRAPHER : ActionOn.CLIENT;
 
-//   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-//     event.preventDefault();
-//     const formData = new FormData(event.currentTarget);
+    const {
+        isModalOpen,
+        editingEntity,
+        openAddModal,
+        openEditModal,
+        closeModal,
+        handleDelete,
+        handleSave,
+    } = useEntityManagement(timeline?.items || [], (newItems) => {
+        if (timeline) {
+            const sortedItems = newItems.sort((a, b) => (a.startTime?.seconds || 0) - (b.startTime?.seconds || 0));
+            updateTimeline({ ...timeline, items: sortedItems });
+        }
+    });
 
-//     const newEvent: TimelineEvent = {
-//       id: `event_${uuidv4()}`, // Use UUID for stable IDs
-//       name: formData.get('eventName') as string,
-//       type: formData.get('eventType') as TimelineEventType,
-//       time: formData.get('eventTime') as string,
-//       notes: formData.get('eventNotes') as string,
-//     };
+    useEffect(() => {
+        if (editingEntity) {
+            setFormState(editingEntity);
+            setStartTimeString(timestampToTimeString(editingEntity.startTime));
+        } else {
+            setFormState(emptyEvent);
+            setStartTimeString('');
+        }
+    }, [editingEntity]);
 
-//     onAddEvent(newEvent);
-//     setIsModalOpen(false);
-//   };
+    const handleSaveWithTimeConversion = () => {
+        const eventData = {
+            ...formState,
+            startTime: timeStringToTimestamp(startTimeString)!,
+        };
+        handleSave(eventData);
+    };
 
-//   const sortedEvents = [...(events || [])].sort((a, b) => a.time.localeCompare(b.time));
+    if (!timeline) return <div>Loading...</div>;
 
-//   return (
-//     <section aria-labelledby="timeline-heading">
-//       <div className="text-center mb-6">
-//         <h2 id="timeline-heading" style={t.titleLarge}>Key Events Timeline</h2>
-//         <p className="max-w-2xl mx-auto" style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 8 }}>
-//           Provide the main &quot;tentpole&quot; events of your day. Your photographer will use this to build a detailed final schedule.
-//         </p>
-//         <Button onClick={() => setIsModalOpen(true)} className="mt-4">Add Event</Button>
-//       </div>
+    return (
+        <div className="max-w-6xl mx-auto px-2">
+            {/* Header Section */}
+            <div className="text-center mb-4">
+                <h1 className="text-3xl md:text-4xl font-serif mb-4">
+                    Timeline
+                </h1>
+                <p className="text-lg md:text-xl font-sans font-medium mb-4 max-w-lg mx-auto">
+                    Outline the main events of your day.
+                </p>
+                {isFinalized && (
+                    <Alert variant="success" className="max-w-3xl mx-auto mb-4">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertTitle>This section has been finalized.</AlertTitle>
+                        <AlertDescription>
+                            Please contact your photographer if further changes are required.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {isLocked && !isFinalized && actionOn === ActionOn.PHOTOGRAPHER && (
+                    <Alert variant="warning" className="max-w-3xl mx-auto mb-4">
+                        <Lock className="h-4 w-4" />
+                        <AlertTitle>This section is locked for review.</AlertTitle>
+                        <AlertDescription>
+                            Your photographer is reviewing the details. Please contact them if changes are needed.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {actionOn === ActionOn.CLIENT && !isLocked && !isFinalized && showActionRequired && (
+                    <Alert variant="default" className="max-w-3xl mx-auto mb-4 relative text-left py-2">
+                        {/* <UserCheck className="h-4 w-4" /> */}
+                        <AlertTitle>Action Required</AlertTitle>
+                        <AlertDescription>Please add your timeline events.</AlertDescription>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                            onClick={() => setShowActionRequired(false)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </Alert>
+                )}
+            </div>
 
-//       <div className="max-w-3xl mx-auto">
-//         {sortedEvents && sortedEvents.length > 0 ? (
-//           sortedEvents.map(event => (
-//             <div key={event.id} className="flex items-stretch mb-6">
-//               <div className="flex flex-col items-center mr-4">
-//                 <div className="text-white font-bold w-20 text-center py-1 rounded-t-lg" style={{ backgroundColor: colors.primary }}>{event.time}</div>
-//                 <div className="w-px flex-grow bg-gray-300"></div>
-//               </div>
-//               <div className="rounded-lg shadow-md p-4 w-full" style={{ backgroundColor: colors.surface }}>
-//                 <div className="flex justify-between items-start">
-//                   <div className="flex items-center gap-3">
-//                     <SvgIcon src={getTimelineEventIconSrc(event.type)} size={24} title={event.type} />
-//                     <h3 style={t.titleMedium}>{event.name}</h3>
-//                   </div>
-//                   <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full text-center" style={{ backgroundColor: colors.surfaceVariant, color: colors.onSurface }}>{event.type}</span>
-//                 </div>
-//                 {event.notes && <p style={{ ...t.onSurfaceVariant.bodyMedium, marginTop: 4 }}>{event.notes}</p>}
-//               </div>
-//             </div>
-//           ))
-//         ) : (
-//           <p className="text-gray-500 text-center">No events added yet.</p>
-//         )}
-//       </div>
+            <div className="flex justify-center mb-6">
+                <Button onClick={openAddModal} disabled={isLocked} size="sm" className="w-full text-lg h-8 tracking-wide">
+                    Add Event
+                </Button>
+            </div>
 
-//       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Timeline Event">
-//         <form onSubmit={handleSubmit}>
-//           <div className="mb-4">
-//             <label htmlFor="eventName" className="block text-sm font-medium text-gray-700">Event Name</label>
-//             <input type="text" id="eventName" name="eventName" required placeholder="e.g., Ceremony Begins" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//           </div>
-//           <div className="mb-4">
-//             <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">Event Type</label>
-//             <select id="eventType" name="eventType" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-select">
-//               {Object.values(TimelineEventType).map(type => <option key={type} value={type}>{type}</option>)}
-//             </select>
-//           </div>
-//           <div className="mb-4">
-//             <label htmlFor="eventTime" className="block text-sm font-medium text-gray-700">Approximate Time</label>
-//             <input type="time" id="eventTime" name="eventTime" required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-input" />
-//           </div>
-//           <div className="mb-4">
-//             <label htmlFor="eventNotes" className="block text-sm font-medium text-gray-700">Location / Notes</label>
-//             <textarea id="eventNotes" name="eventNotes" rows={2} placeholder="e.g., The Oak Room" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm form-textarea"></textarea>
-//           </div>
-//           <div className="flex justify-end space-x-3 mt-6">
-//             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-//             <Button type="submit">Save Event</Button>
-//           </div>
-//         </form>
-//       </Modal>
-//     </section>
-//   );
-// };
+            {timeline.items.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {timeline.items.map((event) => (
+                        <Card key={event.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-center font-serif text-2xl">{event.title}</CardTitle>
+                                <div className="flex items-center space-x-2">
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        onClick={() => openEditModal(event)}
+                                        disabled={isLocked}
+                                        className="w-6 h-6 rounded-full"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        onClick={() => handleDelete(event.id)}
+                                        disabled={isLocked}
+                                        className="w-6 h-6 rounded-full"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <CardContent className="py-0 px-0">
+                                <CardDescription className="font-sans text-lg font-medium">
+                                    {timestampToTimeString(event.startTime)} - {event.type}
+                                </CardDescription>
+                            </CardContent>
+                            <CardFooter className="justify-start px-0">
+                                <p className="text-sm font-sans text-muted-foreground">
+                                    Duration: {event.duration} minutes
+                                </p>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <EmptyState />
+            )}
+
+            <AddEditModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                onSave={handleSaveWithTimeConversion}
+                entity={formState}
+                title={editingEntity ? 'Edit Event' : 'Add New Event'}
+                isLocked={isLocked || false}
+            >
+                <div className="space-y-2">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="title" className="font-sans text-xs text-muted-foreground">Event Title *</Label>
+                        <Input id="title" value={formState.title} onChange={(e) => setFormState({ ...formState, title: e.target.value })} required placeholder="Wedding Ceremony" />
+                    </div>
+                    <div className="space-y-0.5">
+                        <Label htmlFor="type" className="font-sans text-xs text-muted-foreground">Event Type *</Label>
+                        <Select value={formState.type} onValueChange={(value) => setFormState({ ...formState, type: value as TimelineEventType })}>
+                            <SelectTrigger className="w-full"><SelectValue/></SelectTrigger>
+                            <SelectContent>{Object.values(TimelineEventType).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">                       
+                        <div className="space-y-0.5">
+                            <Label htmlFor="startTime" className="font-sans text-xs text-muted-foreground">Start Time *</Label>
+                            <Input type="time" id="startTime" value={startTimeString} onChange={(e) => setStartTimeString(e.target.value)} required placeholder="10:00" />
+                        </div>
+                        <div className="space-y-0.5">
+                            <Label htmlFor="duration" className="font-sans text-xs text-muted-foreground">Duration (5 mins) *</Label>
+                            <Input type="number" id="duration" min="0" step="5" value={formState.duration} onChange={(e) => setFormState({ ...formState, duration: parseInt(e.target.value, 10) || 0 })} required placeholder="30" />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-0.5">
+                        <Label htmlFor="clientNotes" className="font-sans text-xs text-muted-foreground">Notes</Label>
+                        <Textarea id="clientNotes" value={formState.clientNotes || ''} onChange={(e) => setFormState({ ...formState, clientNotes: e.target.value })} placeholder="Bride's father is wearing a bow tie" />
+                    </div>
+                </div>
+            </AddEditModal>
+        </div>
+    );
+};
+

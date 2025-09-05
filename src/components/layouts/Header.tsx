@@ -1,4 +1,4 @@
-import { useTypography } from '@/lib/useAppStyle';
+import React from 'react';
 
 interface HeaderProps {
   projectName: string;
@@ -7,15 +7,17 @@ interface HeaderProps {
   personB: string;
 }
 
-export const Header = ({ projectName, photographerName, personA, personB }: HeaderProps) => {
-  const t = useTypography();
-
+export const Header: React.FC<HeaderProps> = ({ projectName, photographerName, personA, personB }) => {
   return (
-    <header className="text-center mb-6">
-      <h1 style={{ ...t.headlineLarge }}>{projectName}</h1>
-      <p className="text-lg text-gray-700">{personA} & {personB}</p>
-      <p style={{ ...t.onSurfaceVariant.bodyLarge, marginTop: 8 }}>Planning Portal</p>
-      <p style={{ ...t.onSurfaceVariant.bodySmall }}>Shared by your photographer: {photographerName}</p>
+    <header className="bg-card text-card-foreground shadow-sm rounded-lg p-6 text-center mb-8">
+      <h1 className="text-3xl font-bold font-serif">{projectName}</h1>
+      <p className="text-lg text-muted-foreground mt-2 font-sans">
+        The Wedding of {personA} & {personB}
+      </p>
+      <p className="text-sm text-muted-foreground mt-1 font-sans">
+        Photography by: {photographerName}
+      </p>
     </header>
   );
 };
+

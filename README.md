@@ -1,282 +1,93 @@
-# Eye Doo Client Portal
+# **Eye Doo Client Portal**
 
-A comprehensive wedding photography client planning portal built with Next.js 15, React 19, TypeScript, and Firebase. This application allows wedding photography clients to collaboratively plan their special day through an intuitive, step-by-step interface.
+A comprehensive wedding photography client planning portal built with Next.js, React, TypeScript, and Firebase. This application allows wedding photography clients to collaboratively plan their special day through an intuitive, step-by-step interface.
 
-## 🎯 Project Overview
+## **🎯 Project Overview**
 
 The Eye Doo Client Portal is a sophisticated web application designed to streamline the wedding photography planning process. It provides clients with a structured, guided approach to planning their wedding day photography, covering all essential aspects from key people and locations to timeline and special photo requests.
 
-### Key Features
-- **Multi-step Planning Process**: Guided workflow through 5 main planning steps
-- **Real-time Collaboration**: Live updates using Firebase real-time listeners
-- **Comprehensive Planning Sections**: Locations, key people, group shots, photo requests, and timeline
-- **Professional Photography Focus**: Built specifically for wedding photography workflows
-- **Responsive Design**: Modern UI built with Tailwind CSS and custom components
-- **Data Persistence**: Secure Firebase backend with real-time synchronization
+### **Key Features**
 
-## 🏗️ Architecture
+* **Multi-step Planning Process**: Guided workflow through planning steps including Welcome, Key People, Locations, Group Photos, Special Requests, and Timeline.  
+* **Real-time Collaboration**: Live updates using Firebase real-time listeners.  
+* **Centralized State Management**: Uses Zustand for predictable and efficient state management across the application.  
+* **Type Safety**: Built with TypeScript and Zod for robust data validation and schema definition.  
+* **Modern UI**: Responsive design built with Tailwind CSS and custom React components, featuring consistent button patterns, standardized alerts, and improved form layouts.  
+* **Data Persistence**: Secure Firebase backend with real-time data synchronization.  
+* **Unsaved Changes Prompt**: Prevents clients from accidentally losing their work.
 
-### Technology Stack
-- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
-- **Styling**: Tailwind CSS 4, CSS Modules
-- **Backend**: Firebase (Firestore, Authentication)
-- **State Management**: React hooks with local state management
-- **Build Tools**: ESLint, PostCSS
+## **🏗️ Architecture**
 
-### Project Structure
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # Root layout with providers
-│   ├── page.tsx           # Main portal page
-│   ├── globals.css        # Global styles
-│   └── portal.module.css  # Portal-specific styles
-├── components/             # React components
-│   ├── layouts/           # Layout components (Header, StatusBar)
-│   ├── sections/          # Main planning sections
-│   ├── ui/                # Reusable UI components
-│   └── fonts/             # Font configurations
-├── lib/                   # Utility libraries
-│   ├── firebase.ts        # Firebase configuration
-│   ├── projectService.ts  # Main service layer
-│   └── useUnsavedChangesPrompt.ts # Custom hooks
-├── types/                 # TypeScript type definitions
-├── data/                  # Master data and configurations
-└── pages/                 # Additional pages (if any)
-```
+### **Technology Stack**
 
-## 🚀 Features
+* **Framework**: Next.js  
+* **Library**: React  
+* **Language**: TypeScript  
+* **Styling**: Tailwind CSS  
+* **Backend & Database**: Firebase (Firestore, Auth, Functions)  
+* **State Management**: Zustand  
+* **Schema Validation**: Zod
 
-### 1. Planning Steps
-The portal guides clients through 5 main planning steps:
+### **Project Structure**
 
-1. **Welcome** - Introduction and overview
-2. **Key People** - Wedding party and family members
-3. **Locations** - Venues and photo locations
-4. **Group Photos** - Formal group shot planning
-5. **Special Requests** - Custom photo ideas
-6. **Timeline** - Day-of event scheduling
-7. **Completion** - Final review and submission
+src/  
+├── app/                  \# Next.js App Router (Main page, layout, global styles)  
+├── components/           \# React components  
+│   ├── layouts/          \# Layout components (Header, StatusBar)  
+│   ├── sections/         \# Main planning section components  
+│   └── ui/               \# Reusable UI components (Modals, Containers)  
+├── lib/                  \# Utility libraries and hooks  
+│   ├── firebase.ts       \# Firebase configuration and initialization  
+│   ├── test-data.ts      \# Sample data for testing and demo mode  
+│   ├── useEntityManagement.ts \# Custom hook for CRUD operations  
+│   └── useUnsavedChangesPrompt.ts \# Custom hook for unsaved changes warning  
+├── services/             \# Service layer for data interaction  
+│   └── portalService.ts  \# Handles all communication with Firebase  
+├── store/                \# Global state management  
+│   └── usePortalStore.ts \# Zustand store definition  
+└── types/                \# TypeScript type definitions  
+    └── types.ts          \# Zod schemas and type definitions
 
-### 2. Core Planning Sections
+## **🚀 Setup and Installation**
 
-#### Key People Section
-- Add wedding party members with roles
-- Define special actions (speeches, readings, dances)
-- Role-based categorization (bridesmaids, groomsmen, family)
-- Notes and special instructions
+### **Prerequisites**
 
-#### Locations Section
-- Multiple venue support
-- Location types (ceremony, reception, getting ready, etc.)
-- Address management and travel time estimates
-- Arrival/departure scheduling
+* Node.js (version specified in package.json)  
+* npm, yarn, or pnpm  
+* A Firebase project with Firestore, Auth, and Functions enabled.
 
-#### Group Shots Section
-- Predefined group shot categories
-- Custom group shot creation
-- Family, wedding party, and extended family organization
-- Time allocation and notes
+### **Environment Variables**
 
-#### Photo Requests Section
-- Special photo idea submission
-- Request categorization and prioritization
-- Detailed descriptions and requirements
-- Photographer review workflow
+Create a .env.local file in the root of the project with your Firebase configuration:
 
-#### Timeline Section
-- Event scheduling and timing
-- Predefined event types
-- Custom event creation
-- Flow optimization and coordination
+NEXT\_PUBLIC\_FIREBASE\_API\_KEY=your\_api\_key  
+NEXT\_PUBLIC\_FIREBASE\_AUTH\_DOMAIN=your\_auth\_domain  
+NEXT\_PUBLIC\_FIREBASE\_PROJECT\_ID=your\_project\_id  
+NEXT\_PUBLIC\_FIREBASE\_STORAGE\_BUCKET=your\_storage\_bucket  
+NEXT\_PUBLIC\_FIREBASE\_MESSAGING\_SENDER\_ID=your\_messaging\_sender\_id  
+NEXT\_PUBLIC\_FIREBASE\_APP\_ID=your\_app\_id
 
-### 3. Data Management
-- **Real-time Updates**: Live synchronization across all sections
-- **Local State Management**: Optimistic updates with conflict resolution
-- **Unsaved Changes Protection**: Prevents accidental data loss
-- **Section Locking**: Controlled access based on workflow progress
+### **Installation**
 
-## 🛠️ Setup and Installation
+1. **Clone the repository**  
+   git clone \<repository-url\>  
+   cd GEM-36-PORTAL
 
-### Prerequisites
-- Node.js 18+ 
-- npm, yarn, pnpm, or bun
-- Firebase project with Firestore enabled
-
-### Environment Variables
-Create a `.env.local` file with the following Firebase configuration:
-
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-```
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd eye-doo-client-portal
-   ```
-
-2. **Install dependencies**
-   ```bash
+2. **Install dependencies**  
    npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
 
-3. **Set up Firebase**
-   - Create a Firebase project
-   - Enable Firestore database
-   - Set up authentication
-   - Configure security rules
-   - Add the master data using the provided script
-
-4. **Run the development server**
-   ```bash
+3. **Run the development server**  
    npm run dev
-   # or
-   yarn dev
-   ```
 
-5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+4. Open your browser  
+   Navigate to http://localhost:3000. To enter live mode, append your project ID and access token as query parameters: http://localhost:3000/?project=YOUR\_PROJECT\_ID\&token=YOUR\_ACCESS\_TOKEN. Without these, the app runs in a demo mode using test data.
 
-## 📊 Data Structure
+## **🌐 Deployment**
 
-### Firebase Collections
+The application is configured for easy deployment on platforms like Vercel or Netlify.
 
-#### Projects Collection
-- **Document ID**: Unique project identifier
-- **Fields**: Project metadata, client information, photographer details
-- **Subcollections**: locations, keyPeople, groupShots, photoRequests, timeline
+1. Connect your Git repository to your hosting provider.  
+2. Set the environment variables listed above in your provider's dashboard.  
+3. Deploy the main branch. The build command is next build.
 
-#### Master Data
-- **Kit Categories**: Photography equipment and essentials
-- **Couple Shot Categories**: Predefined couple photography scenarios
-- **Group Shot Categories**: Family and wedding party groupings
-- **Timeline Event Types**: Standard wedding day events
-
-### Data Models
-
-#### Project Data
-```typescript
-interface ProjectData {
-  projectInfo: {
-    projectName: string;
-    eventDate: Timestamp;
-    personA: { firstName: string; surname: string };
-    personB: { firstName: string; surname: string };
-    location: { locationAddress: string; locationPostcode: string };
-    contact: { primaryEmail: string; primaryPhone: string };
-  };
-  portalStatus: {
-    currentStep: number;
-    sectionStates: Record<string, SectionStatus>;
-  };
-}
-```
-
-#### Section Data Structure
-Each planning section follows a consistent pattern:
-```typescript
-interface SectionData<T> {
-  config: {
-    finalized: boolean;
-    photographerReviewed: boolean;
-    status: SectionStatus;
-  };
-  items: T[];
-}
-```
-
-## 🔧 Development
-
-### Available Scripts
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-
-### Code Style
-- TypeScript for type safety
-- ESLint for code quality
-- Tailwind CSS for styling
-- Component-based architecture
-- Custom hooks for business logic
-
-### Adding New Features
-1. Define types in `src/types/`
-2. Create components in `src/components/`
-3. Add services in `src/lib/`
-4. Update the main page to include new sections
-5. Add to the planning steps array
-
-## 🌐 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Other Platforms
-- **Netlify**: Build command: `npm run build`, Publish directory: `out`
-- **Firebase Hosting**: Use Firebase CLI for deployment
-- **Docker**: Build and deploy as containerized application
-
-## 🔒 Security
-
-### Authentication
-- Custom token authentication via Firebase Cloud Functions
-- Secure portal access with project-specific tokens
-- Client isolation and data privacy
-
-### Firestore Rules
-- Project-based access control
-- Client data isolation
-- Read/write permissions based on authentication status
-
-## 📱 Browser Support
-- Modern browsers (Chrome, Firefox, Safari, Edge)
-- Mobile-responsive design
-- Progressive Web App capabilities
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
-## 🆘 Support
-
-For technical support or questions:
-- Check the Firebase console for configuration issues
-- Review the browser console for client-side errors
-- Verify environment variables are correctly set
-- Ensure Firebase security rules allow necessary operations
-
-## 🔮 Future Enhancements
-
-- **Offline Support**: Service worker for offline functionality
-- **Multi-language Support**: Internationalization for global clients
-- **Advanced Analytics**: Client engagement and planning metrics
-- **Integration APIs**: Third-party wedding planning tools
-- **Mobile App**: Native mobile applications
-- **AI Planning Assistant**: Intelligent suggestions and optimization
-
----
-
-**Built with ❤️ for wedding photographers and their clients**
+**Built with ❤️ for wedding photographers and their clients.**
