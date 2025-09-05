@@ -3,14 +3,14 @@ import Image from 'next/image'; // Import next/image
 import { usePortalStore } from '../../store/usePortalStore';
 import { ClientGroupShotItem, ActionOn } from '../../types/types';
 import { useEntityManagement } from '../../lib/useEntityManagement';
-import { AddEditModal } from '../ui/AddEditModal';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Checkbox } from '../ui/checkbox';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { AddEditModal } from '@/components/ui/AddEditModal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Trash2, Clock, CheckCircle, Lock, X } from 'lucide-react';
 
 const emptyCustomShot: Omit<ClientGroupShotItem, 'id' | 'isPredefined' | 'checked' | 'time'> = {

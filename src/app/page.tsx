@@ -8,9 +8,9 @@ import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, ArrowLeftIcon, ArrowRightIcon, CheckCircle2, HomeIcon } from 'lucide-react';
 
 // Import ShadCN UI Components
-import { Button } from '../components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Import Section Components
 import { LandingPageSection } from '../components/sections/LandingPageSection';

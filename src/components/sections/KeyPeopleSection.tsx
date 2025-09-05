@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { usePortalStore } from '../../store/usePortalStore';
 import { ClientKeyPerson, KeyPersonRole, KeyPersonInvolvement, ActionOn, PortalStepID } from '../../types/types';
 import { useEntityManagement } from '../../lib/useEntityManagement';
-import { AddEditModal } from '../ui/AddEditModal';
-import { Button } from '../ui/button';
-import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
-import { Input } from '../ui/input';
-import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
+import { AddEditModal } from '@/components/ui/AddEditModal';
+import { Button } from '@/components/ui/button';
+import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Users, CheckCircle, Lock, Pencil, X } from 'lucide-react';
 
 const emptyPerson: Omit<ClientKeyPerson, 'id'> = {

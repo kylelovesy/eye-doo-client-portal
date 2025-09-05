@@ -4,12 +4,12 @@ import { usePortalStore } from '../../store/usePortalStore';
 import { SectionStatus, PortalStepID, ActionOn, PortalStep } from '../../types/types';
 
 // Import ShadCN UI Components
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { Progress } from '../ui/progress';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Lock, Check, ChevronRight } from 'lucide-react';
 
 // Progress Indicator Component using ShadCN Badge
