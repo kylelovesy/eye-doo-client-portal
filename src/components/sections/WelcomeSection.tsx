@@ -5,55 +5,55 @@ import { SectionStatus, PortalStepID, ActionOn, PortalStep } from '@/types/types
 
 // Import ShadCN UI Components
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+// import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Lock, Check, ChevronRight } from 'lucide-react';
 
-// Progress Indicator Component using ShadCN Badge
-const ProgressIndicator = ({ status }: { status: SectionStatus }) => {
-  const getVariant = (): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status) {
-      case SectionStatus.FINALIZED: return 'default';
-      case SectionStatus.LOCKED: return 'secondary';
-      case SectionStatus.IN_PROGRESS: return 'outline';
-      default: return 'secondary';
-    }
-  };
+// // Progress Indicator Component using ShadCN Badge
+// const ProgressIndicator = ({ status }: { status: SectionStatus }) => {
+//   const getVariant = (): "default" | "secondary" | "destructive" | "outline" => {
+//     switch (status) {
+//       case SectionStatus.FINALIZED: return 'default';
+//       case SectionStatus.LOCKED: return 'secondary';
+//       case SectionStatus.IN_PROGRESS: return 'outline';
+//       default: return 'secondary';
+//     }
+//   };
 
-  const getLabel = (status: SectionStatus) => {
-    switch (status) {
-      case SectionStatus.FINALIZED: return 'Complete';
-      case SectionStatus.LOCKED: return 'Pending Review';
-      case SectionStatus.IN_PROGRESS: return 'In Progress';
-      default: return 'Not Started';
-    }
-  };
+//   const getLabel = (status: SectionStatus) => {
+//     switch (status) {
+//       case SectionStatus.FINALIZED: return 'Complete';
+//       case SectionStatus.LOCKED: return 'Pending Review';
+//       case SectionStatus.IN_PROGRESS: return 'In Progress';
+//       default: return 'Not Started';
+//     }
+//   };
 
-  return <Badge variant={getVariant()}>{getLabel(status)}</Badge>;
-};
+//   return <Badge variant={getVariant()}>{getLabel(status)}</Badge>;
+// };
 
-// Progress Summary Component
-const ProgressSummary = ({ steps }: { steps: PortalStep[] }) => {
-    const totalSteps = steps.length;
-    const completedSteps = steps.filter(step => step.stepStatus === SectionStatus.FINALIZED).length;
-    const progressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+// // Progress Summary Component
+// const ProgressSummary = ({ steps }: { steps: PortalStep[] }) => {
+//     const totalSteps = steps.length;
+//     const completedSteps = steps.filter(step => step.stepStatus === SectionStatus.FINALIZED).length;
+//     const progressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
-    return (
-        <Card className="mb-8 bg-muted/50 border-primary/20">
-            <CardHeader className="text-center">
-                <CardTitle className="font-serif">Planning Progress</CardTitle>
-                <CardDescription className="font-sans">{completedSteps} of {totalSteps} sections completed</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Progress value={progressPercentage} className="mb-4" />
-                <div className="text-3xl font-bold text-primary text-center">{progressPercentage}%</div>
-            </CardContent>
-        </Card>
-    );
-};
+//     return (
+//         <Card className="mb-8 bg-muted/50 border-primary/20">
+//             <CardHeader className="text-center">
+//                 <CardTitle className="font-serif">Planning Progress</CardTitle>
+//                 <CardDescription className="font-sans">{completedSteps} of {totalSteps} sections completed</CardDescription>
+//             </CardHeader>
+//             <CardContent>
+//                 <Progress value={progressPercentage} className="mb-4" />
+//                 <div className="text-3xl font-bold text-primary text-center">{progressPercentage}%</div>
+//             </CardContent>
+//         </Card>
+//     );
+// };
 
 export const WelcomeSection: React.FC = () => {
     const { project, setStep, keyPeople, locations, groupShots, photoRequests, timeline } = usePortalStore();
