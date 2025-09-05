@@ -1,7 +1,7 @@
 import React from 'react';
-import { ActionOn } from '../../types/types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
-import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { ActionOn } from '@/types/types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, Lock, UserCheck } from 'lucide-react';
 
 interface SectionContainerProps {
