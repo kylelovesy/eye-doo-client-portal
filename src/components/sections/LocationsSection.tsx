@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { usePortalStore } from '../../store/usePortalStore';
-import { ClientLocation, LocationType, ActionOn } from '../../types/types';
-import { useEntityManagement } from '../../lib/useEntityManagement';
+import { usePortalStore } from '@/store/usePortalStore';
+import { ClientLocation, LocationType, ActionOn } from '@/types/types';
+import { useEntityManagement } from '@/lib/useEntityManagement';
 import { AddEditModal } from '@/components/ui/AddEditModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, MapPin, Pencil, CheckCircle, Lock, X } from 'lucide-react';
-import { timestampToTimeString, timeStringToTimestamp } from '../../lib/utils'; 
+import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils'; 
 
 const emptyLocation: Omit<ClientLocation, 'id'> = {
     locationName: '',

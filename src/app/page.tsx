@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { usePortalStore } from '../store/usePortalStore';
-import { PortalStepID } from '../types/types';
+import { usePortalStore } from '@/store/usePortalStore';
+import { PortalStepID } from '@/types/types';
 import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, ArrowLeftIcon, ArrowRightIcon, CheckCircle2, HomeIcon } from 'lucide-react';
 
@@ -13,16 +13,16 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Import Section Components
-import { LandingPageSection } from '../components/sections/LandingPageSection';
-import { WelcomeSection } from '../components/sections/WelcomeSection';
-import { KeyPeopleSection } from '../components/sections/KeyPeopleSection';
-import { LocationsSection } from '../components/sections/LocationsSection';
-import { GroupShotsSection } from '../components/sections/GroupShotsSection';
-import { PhotoRequestsSection } from '../components/sections/PhotoRequestSection';
-import { TimelineSection } from '../components/sections/TimelineSection';
+import { LandingPageSection } from '@/components/sections/LandingPageSection';
+import { WelcomeSection } from '@/components/sections/WelcomeSection';
+import { KeyPeopleSection } from '@/components/sections/KeyPeopleSection';
+import { LocationsSection } from '@/components/sections/LocationsSection';
+import { GroupShotsSection } from '@/components/sections/GroupShotsSection';
+import { PhotoRequestsSection } from '@/components/sections/PhotoRequestSection';
+import { TimelineSection } from '@/components/sections/TimelineSection';
 // import { Header } from '../components/layouts/Header';
-import { OnboardingModal } from '../components/ui/OnboardingModal';
-import useUnsavedChangesPrompt from '../lib/useUnsavedChangesPrompt';
+import { OnboardingModal } from '@/components/ui/OnboardingModal';
+import useUnsavedChangesPrompt from '@/lib/useUnsavedChangesPrompt';
 
 const CompleteSection = () => (
     <Card className="text-center py-8">

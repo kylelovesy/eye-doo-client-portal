@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { usePortalStore } from '../../store/usePortalStore';
-import { ClientKeyPerson, KeyPersonRole, KeyPersonInvolvement, ActionOn, PortalStepID } from '../../types/types';
-import { useEntityManagement } from '../../lib/useEntityManagement';
+import { usePortalStore } from '@/store/usePortalStore';
+import { ClientKeyPerson, KeyPersonRole, KeyPersonInvolvement, ActionOn, PortalStepID } from '@/types/types';
+import { useEntityManagement } from '@/lib/useEntityManagement';
 import { AddEditModal } from '@/components/ui/AddEditModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';

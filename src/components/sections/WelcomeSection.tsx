@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { usePortalStore } from '../../store/usePortalStore';
-import { SectionStatus, PortalStepID, ActionOn, PortalStep } from '../../types/types';
+import { usePortalStore } from '@/store/usePortalStore';
+import { SectionStatus, PortalStepID, ActionOn, PortalStep } from '@/types/types';
 
 // Import ShadCN UI Components
 import { Button } from '@/components/ui/button';

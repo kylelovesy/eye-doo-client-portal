@@ -1,9 +1,9 @@
-import { ThemeProvider } from '../components/theme-provider';
+import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
 import { Playfair_Display, Montserrat, Geist_Mono } from 'next/font/google';
 // import { GeistMono } from 'geist/font/mono';
 // import { cn } from '@/lib/utils';
-import './globals.css';
+import '@/app/globals.css';
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",

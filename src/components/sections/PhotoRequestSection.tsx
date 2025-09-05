@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { usePortalStore } from '../../store/usePortalStore';
-import { ClientPhotoRequest, PhotoRequestType, PhotoRequestPriority, ActionOn } from '../../types/types';
-import { useEntityManagement } from '../../lib/useEntityManagement';
+import { usePortalStore } from '@/store/usePortalStore';
+import { ClientPhotoRequest, PhotoRequestType, PhotoRequestPriority, ActionOn } from '@/types/types';
+import { useEntityManagement } from '@/lib/useEntityManagement';
 import { AddEditModal } from '@/components/ui/AddEditModal';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { app } from '../../lib/firebase';
+import { app } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';

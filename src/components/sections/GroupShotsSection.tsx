@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image'; // Import next/image
-import { usePortalStore } from '../../store/usePortalStore';
-import { ClientGroupShotItem, ActionOn } from '../../types/types';
-import { useEntityManagement } from '../../lib/useEntityManagement';
+import { usePortalStore } from '@/store/usePortalStore';
+import { ClientGroupShotItem, ActionOn } from '@/types/types';
+import { useEntityManagement } from '@/lib/useEntityManagement';
 import { AddEditModal } from '@/components/ui/AddEditModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -206,12 +206,12 @@ export const GroupShotsSection: React.FC = () => {
                 title="Request Group Shot"
                 isLocked={isLocked || false}
             >
-                <div className="space-y-1">
-                    <Label htmlFor="customShotName" className="font-sans">Title *</Label>
+                <div className="space-y-0.5">
+                    <Label htmlFor="customShotName" className="font-sans text-xs text-muted-foreground">Title *</Label>
                     <Input id="customShotName" value={formState.name} onChange={(e) => setFormState({...formState, name: e.target.value})} placeholder="e.g., Bride with University Friends" required />
                 </div>
-                <div className="space-y-1">
-                    <Label htmlFor="customShotNotes" className="font-sans">Description</Label>
+                <div className="space-y-0.5">
+                    <Label htmlFor="customShotNotes" className="font-sans text-xs text-muted-foreground">Description</Label>
                     <Textarea
                         id="customShotNotes"
                         value={formState.notes || ''}

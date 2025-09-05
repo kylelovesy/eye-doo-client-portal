@@ -201,7 +201,7 @@ import {
   } from 'firebase/firestore';
   import { httpsCallable } from 'firebase/functions';
   import { signInWithCustomToken } from 'firebase/auth';
-  import { auth, db, functions } from '../lib/firebase'; // Assuming you have a firebase config file
+  import { auth, db, functions } from '@/lib/firebase'; // Assuming you have a firebase config file
   import {
     AuthRequest,
     AuthResponse,
@@ -211,7 +211,7 @@ import {
     PortalLocationData,
     PortalPhotoRequestData,
     PortalTimelineData,
-  } from '../types/types';
+  } from '@/types/types';
   
   // Define the shape of the data that can be saved.
   // Using a discriminated union to ensure type safety.
@@ -309,25 +309,49 @@ import {
       });
     },
   
-    /**
-     * Saves a complete section of data via a secure callable function.
-     * @param projectId - The ID of the project.
-     * @param accessToken - The client's access token for verification.
-     * @param section - The name of the section being saved.
-     * @param data - The data payload for that section.
-     */
-    saveSectionData: async (
-      projectId: string,
-      accessToken: string,
-      section: SaveableData['type'],
-      data: SaveableData['data']
-    ): Promise<void> => {
-      try {
-        await saveClientData({ projectId, accessToken, section, data });
-      } catch (error) {
-        console.error(`Error saving ${section} data:`, error);
-        throw new Error(`Failed to save ${section}. Please try again.`);
-      }
-    },
-  };
+      /**
+   * Saves a complete section of data via a secure callable function.
+   * @param projectId - The ID of the project.
+   * @param accessToken - The client's access token for verification.
+   * @param section - The name of the section being saved.
+   * @param data - The data payload for that section.
+   */
+  saveSectionData: async (
+    projectId: string,
+    accessToken: string,
+    section: SaveableData['type'],
+    data: SaveableData['data']
+  ): Promise<void> => {
+    try {
+      await saveClientData({ projectId, accessToken, section, data });
+    } catch (error) {
+      console.error(`Error saving ${section} data:`, error);
+      throw new Error(`Failed to save ${section}. Please try again.`);
+    }
+  },
+
+  /**
+   * Skips a step by marking it as finalized with actionOn set to none.
+   * @param projectId - The ID of the project.
+   * @param accessToken - The client's access token for verification.
+   * @param stepId - The ID of the step to skip.
+   */
+  skipStep: async (
+    projectId: string,
+    accessToken: string,
+    stepId: string
+  ): Promise<void> => {
+    try {
+      // Call a cloud function to skip the step
+      const skipStepFunction = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, void>(
+        functions,
+        'skipStep'
+      );
+      await skipStepFunction({ projectId, accessToken, stepId });
+    } catch (error) {
+      console.error(`Error skipping step ${stepId}:`, error);
+      throw new Error(`Failed to skip step. Please try again.`);
+    }
+  },
+};
   

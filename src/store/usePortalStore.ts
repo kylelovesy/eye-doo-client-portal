@@ -1,6 +1,6 @@
 // src/store/usePortalStore.ts
 import { create, StateCreator } from 'zustand';
-import { portalService } from '../services/portalService';
+import { portalService } from '@/services/portalService';
 import {
   ClientProject,
   PortalKeyPeopleData,
@@ -11,7 +11,7 @@ import {
   PortalStepID,
   SectionStatus,
   ActionOn,
-} from '../types/types';
+} from '@/types/types';
 
 // Define the shape of the store's state
 interface PortalState {
