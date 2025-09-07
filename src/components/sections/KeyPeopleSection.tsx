@@ -53,7 +53,7 @@ export const KeyPeopleSection: React.FC = () => {
         closeModal,
         handleDelete,
         handleSave,
-    } = useEntityManagement(keyPeople?.items || [], (newItems) => {
+    } = useEntityManagement(keyPeople?.items ?? [], (newItems) => {
         if (keyPeople) {
             updateKeyPeople({ ...keyPeople, items: newItems });
         }
@@ -131,9 +131,9 @@ export const KeyPeopleSection: React.FC = () => {
                 )}
             </div>
 
-            {keyPeople.items.length > 0 ? (
+            {(keyPeople.items ?? []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {keyPeople.items.map((person) => (
+                    {(keyPeople.items ?? []).map((person) => (
                         <Card key={person.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-center font-serif text-2xl">{person.fullName}</CardTitle>

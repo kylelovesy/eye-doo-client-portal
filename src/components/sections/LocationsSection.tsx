@@ -51,7 +51,7 @@ export const LocationsSection: React.FC = () => {
         closeModal,
         handleDelete,
         handleSave,
-    } = useEntityManagement(locations?.items || [], (newItems) => {
+    } = useEntityManagement(locations?.items ?? [], (newItems) => {
         if (locations) {
             updateLocations({ ...locations, items: newItems });
         }
@@ -71,7 +71,7 @@ export const LocationsSection: React.FC = () => {
 
     if (!locations) return <div>Loading...</div>;
 
-    const isMultiLocation = locations.config.multipleLocations;
+    const isMultiLocation = locations?.config?.multipleLocations ?? false;
 
     return (
         <div className="max-w-6xl mx-auto px-2">
@@ -134,9 +134,9 @@ export const LocationsSection: React.FC = () => {
                 </div>
             </div>
 
-            {locations.items.length > 0 ? (
+            {(locations.items ?? []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {locations.items.map((location) => (
+                    {(locations.items ?? []).map((location) => (
                         <Card key={location.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-center font-serif text-2xl">{location.locationName}</CardTitle>

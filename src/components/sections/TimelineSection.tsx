@@ -48,7 +48,7 @@ export const TimelineSection: React.FC = () => {
         closeModal,
         handleDelete,
         handleSave,
-    } = useEntityManagement(timeline?.items || [], (newItems) => {
+    } = useEntityManagement(timeline?.items ?? [], (newItems) => {
         if (timeline) {
             const sortedItems = newItems.sort((a, b) => (a.startTime?.seconds || 0) - (b.startTime?.seconds || 0));
             updateTimeline({ ...timeline, items: sortedItems });
@@ -126,9 +126,9 @@ export const TimelineSection: React.FC = () => {
                 </Button>
             </div>
 
-            {timeline.items.length > 0 ? (
+            {(timeline.items ?? []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {timeline.items.map((event) => (
+                    {(timeline.items ?? []).map((event) => (
                         <Card key={event.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-center font-serif text-2xl">{event.title}</CardTitle>

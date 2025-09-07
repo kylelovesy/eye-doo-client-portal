@@ -53,7 +53,7 @@ export const PhotoRequestsSection: React.FC = () => {
         closeModal,
         handleDelete,
         handleSave,
-    } = useEntityManagement(photoRequests?.items || [], (newItems) => {
+    } = useEntityManagement(photoRequests?.items ?? [], (newItems) => {
         if (photoRequests) {
             updatePhotoRequests({ ...photoRequests, items: newItems });
         }
@@ -93,7 +93,7 @@ export const PhotoRequestsSection: React.FC = () => {
         handleSave({ ...formState, imageUrl });
     };
 
-    const hasReachedLimit = photoRequests ? photoRequests.items.length >= 5 : false;
+    const hasReachedLimit = photoRequests ? (photoRequests.items ?? []).length >= 5 : false;
 
     if (!photoRequests) return <div>Loading...</div>;
 
@@ -148,9 +148,9 @@ export const PhotoRequestsSection: React.FC = () => {
                 </Button>
             </div>
 
-            {photoRequests.items.length > 0 ? (
+            {(photoRequests.items ?? []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {photoRequests.items.map(req => (
+                    {(photoRequests.items ?? []).map(req => (
                         <Card key={req.id} className="relative px-4 py-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-center font-serif text-2xl">{req.title}</CardTitle>

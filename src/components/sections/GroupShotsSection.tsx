@@ -34,7 +34,7 @@ export const GroupShotsSection: React.FC = () => {
         closeModal,
         handleDelete,
         handleSave,
-    } = useEntityManagement(groupShots?.items || [], (newItems) => {
+    } = useEntityManagement(groupShots?.items ?? [], (newItems) => {
         if (groupShots) {
             const newTotalTime = newItems.reduce((sum, item) => item.checked ? sum + item.time : sum, 0);
             updateGroupShots({
@@ -71,7 +71,7 @@ export const GroupShotsSection: React.FC = () => {
 
     const handleToggleWants = (itemId: string) => {
         if (!groupShots) return;
-        const updatedItems = groupShots.items.map(item =>
+        const updatedItems = (groupShots.items ?? []).map(item =>
             item.id === itemId ? { ...item, checked: !item.checked } : item
         );
         const newTotalTime = updatedItems.reduce((sum, item) => item.checked ? sum + item.time : sum, 0);
