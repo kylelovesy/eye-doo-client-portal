@@ -114,6 +114,7 @@ export enum TimelineEventType {
 
 export const PortalStepSchema = z.object({
   id: z.nativeEnum(PortalStepID), // Use enum for type safety
+  portalStepID: z.nativeEnum(PortalStepID), 
   stepTitle: z.string(),
   requiredStep: z.boolean().default(true).optional(),
   stepIcon: z.string().optional(),

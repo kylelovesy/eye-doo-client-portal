@@ -8,7 +8,7 @@ import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, ArrowLeftIcon, ArrowRightIcon, CheckCircle2, HomeIcon } from 'lucide-react';
 
 // Import ShadCN UI Components
-// import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -36,21 +36,21 @@ const CompleteSection = () => (
     </Card>
 );
 
-// const ThemeToggle = () => {
-//     const { theme, setTheme } = useTheme();
-//     return (
-//         <Button 
-//             variant="outline" 
-//             size="icon" 
-//             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-//             className="absolute top-1 right-1 size-6"
-//         >
-//             <SunIcon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-//             <MoonIcon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-//             <span className="sr-only">Toggle theme</span>
-//         </Button>
-//     );
-// };
+const ThemeToggle = () => {
+    const { theme, setTheme } = useTheme();
+    return (
+        <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="absolute top-1 right-1 size-6"
+        >
+            <SunIcon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <MoonIcon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+        </Button>
+    );
+};
 
 const PortalPageContent: React.FC = () => {
     const {
@@ -218,7 +218,7 @@ const PortalPageContent: React.FC = () => {
 
     return (
         <>
-        {/* <ThemeToggle />         */}
+        <ThemeToggle />        
         <div className="container mx-auto p-2 sm:p-4 min-h-screen flex flex-col">           
             
             <main className="my-2 sm:my-4 flex-grow">
@@ -242,7 +242,7 @@ const PortalPageContent: React.FC = () => {
                 return (
                     <footer className="mt-8 mx-auto max-w-4xl">
                         {/* Save Changes Button - Top Row */}
-                        {/* <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-4">
                             <Button
                             size="sm"
                             className="w-full text-lg h-8 tracking-wide"
@@ -251,17 +251,17 @@ const PortalPageContent: React.FC = () => {
                             >
                                 {isSaving ? 'Saving...' : 'Save Changes'}
                             </Button>
-                        </div> */}
+                        </div>
 
                         {/* Navigation Buttons - Bottom Row */}
                         <div className="flex flex-row justify-center items-center gap-2">
-                            {/* <Button variant="outline" size="sm" onClick={() => setStep(PortalStepID.WELCOME)} className="rounded-md">
+                            <Button variant="outline" size="sm" onClick={() => setStep(PortalStepID.WELCOME)} className="rounded-md">
                                 <HomeIcon className="h-6 w-6" />
-                            </Button> */}
+                            </Button>
 
                             {showNavigationButtons && (
                                 <>
-                                    {/* <Button
+                                    <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleStepChange('prev')}
@@ -270,9 +270,9 @@ const PortalPageContent: React.FC = () => {
                                     >
                                         <ArrowLeftIcon className="h-4 w-4 mr-1" />
                                         Previous
-                                    </Button> */}
+                                    </Button>
 
-                                    {/* <Button
+                                    <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleStepChange('next')}
@@ -281,7 +281,7 @@ const PortalPageContent: React.FC = () => {
                                     >
                                         Next
                                         <ArrowRightIcon className="h-4 w-4 ml-1" />
-                                    </Button> */}
+                                    </Button>
                                 </>
                             )}
                         </div>
@@ -293,14 +293,14 @@ const PortalPageContent: React.FC = () => {
                 const firstAvailableStep = getFirstAvailableStep();
                 return firstAvailableStep ? (
                     <div className="my-4 px-2 text-center">
-                        {/* <Button
+                        <Button
                         size="sm"
                         className="w-full text-lg font-semibold tracking-wide"
                         onClick={() => setStep(firstAvailableStep.id)}
                         >
                             Proceed To {firstAvailableStep.stepTitle}
                             <ArrowRightIcon className="h-3 w-3 ml-2" />
-                        </Button> */}
+                        </Button>
                     </div>
                 ) : null;
             })()}

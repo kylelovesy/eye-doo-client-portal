@@ -210,6 +210,7 @@ import {
     PortalKeyPeopleData,
     PortalLocationData,
     PortalPhotoRequestData,
+    PortalStep,
     PortalTimelineData,
   } from '@/types/types';
   
@@ -262,6 +263,10 @@ import {
         }
   
         const projectData = projectSnap.data();
+        const portalSteps = (projectData.clientPortal?.steps || []).map((step: PortalStep) => ({
+          ...step,
+          id: step.portalStepID, // Map portalStepID to id
+        }));
   
         // Shape the data to return only what the client portal needs
         const clientProject: ClientProject = {
@@ -273,7 +278,7 @@ import {
           photographerName: projectData.projectInfo.photographerName,
           portalMessage: projectData.clientPortal?.portalMessage,
           currentStepID: projectData.clientPortal?.currentStepID,
-          portalSteps: projectData.clientPortal?.steps || [],
+          portalSteps: portalSteps,
         };
   
         return clientProject;
