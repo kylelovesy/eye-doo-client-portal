@@ -27,13 +27,13 @@ import {
     portalMessage: '',
     currentStepID: PortalStepID.WELCOME,
     portalSteps: [
-        { id: PortalStepID.WELCOME, stepTitle: 'Welcome', stepStatus: SectionStatus.LOCKED, actionOn: ActionOn.NONE, stepDescription: 'Welcome to your wedding planning portal!', stepIcon: '/icons/welcome-section.svg' },
-        { id: PortalStepID.KEY_PEOPLE, stepTitle: 'Key People', requiredStep: false, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'For listing the important people involved in your wedding day', stepIcon: '/icons/key-people-section.svg' },
-        { id: PortalStepID.LOCATIONS, stepTitle: 'Locations', requiredStep: true, stepStatus: SectionStatus.IN_PROGRESS, actionOn: ActionOn.CLIENT, stepDescription: 'For listing the important locations involved in your wedding day', stepIcon: '/icons/locations-section.svg'  },
-        { id: PortalStepID.GROUP_SHOTS, stepTitle: 'Group Shots', requiredStep: true, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Plan your formal group photographs here and calculate the time required', stepIcon: '/icons/group-shots-section.svg' },
-        { id: PortalStepID.PHOTO_REQUESTS, stepTitle: 'Photo Requests', requiredStep: false, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Request the photos of your dreams', stepIcon: '/icons/photo-requests-section.svg' },
-        { id: PortalStepID.TIMELINE, stepTitle: 'Timeline', requiredStep: true, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Let your photographer knows when and where to be for all the key moments', stepIcon: '/icons/timeline-section.svg' },
-        { id: PortalStepID.THANK_YOU, stepTitle: 'Thank You', stepStatus: SectionStatus.LOCKED, actionOn: ActionOn.NONE, stepDescription: 'Thank you for using our wedding planning portal!', stepIcon: '/icons/thank-you-section.svg' },
+        { id: PortalStepID.WELCOME, portalStepID: PortalStepID.WELCOME, stepTitle: 'Welcome', stepStatus: SectionStatus.LOCKED, actionOn: ActionOn.NONE, stepDescription: 'Welcome to your wedding planning portal!', stepIcon: '/icons/welcome-section.svg' },
+        { id: PortalStepID.KEY_PEOPLE, portalStepID: PortalStepID.KEY_PEOPLE, stepTitle: 'Key People', requiredStep: false, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'For listing the important people involved in your wedding day', stepIcon: '/icons/key-people-section.svg' },
+        { id: PortalStepID.LOCATIONS, portalStepID: PortalStepID.LOCATIONS, stepTitle: 'Locations', requiredStep: true, stepStatus: SectionStatus.IN_PROGRESS, actionOn: ActionOn.CLIENT, stepDescription: 'For listing the important locations involved in your wedding day', stepIcon: '/icons/locations-section.svg'  },
+        { id: PortalStepID.GROUP_SHOTS, portalStepID: PortalStepID.GROUP_SHOTS, stepTitle: 'Group Shots', requiredStep: true, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Plan your formal group photographs here and calculate the time required', stepIcon: '/icons/group-shots-section.svg' },
+        { id: PortalStepID.PHOTO_REQUESTS, portalStepID: PortalStepID.PHOTO_REQUESTS, stepTitle: 'Photo Requests', requiredStep: false, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Request the photos of your dreams', stepIcon: '/icons/photo-requests-section.svg' },
+        { id: PortalStepID.TIMELINE, portalStepID: PortalStepID.TIMELINE, stepTitle: 'Timeline', requiredStep: true, stepStatus: SectionStatus.UNLOCKED, actionOn: ActionOn.CLIENT, stepDescription: 'Let your photographer knows when and where to be for all the key moments', stepIcon: '/icons/timeline-section.svg' },
+        { id: PortalStepID.THANK_YOU, portalStepID: PortalStepID.THANK_YOU, stepTitle: 'Thank You', stepStatus: SectionStatus.LOCKED, actionOn: ActionOn.NONE, stepDescription: 'Thank you for using our wedding planning portal!', stepIcon: '/icons/thank-you-section.svg' },
     ],
   };
   
