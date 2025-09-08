@@ -240,9 +240,24 @@ import {
     locations: ClientLocation[];
     config?: SectionConfig 
   }, { success: boolean }>(functions, 'clientSaveLocations');
-  const clientSaveKeyPeople = httpsCallable<{ projectId: string; accessToken: string; items: ClientKeyPerson[]; config?: SectionConfig }, { success: boolean }>(functions, 'clientSaveKeyPeople');
-  const clientSavePhotoRequests = httpsCallable<{ projectId: string; accessToken: string; items: ClientPhotoRequest[]; config?: SectionConfig }, { success: boolean }>(functions, 'clientSavePhotoRequests');
-  const clientSaveGroupShotSelections = httpsCallable<{ projectId: string; accessToken: string; allLocalItems: ClientGroupShotItem[] }, { success: boolean }>(functions, 'clientSaveGroupShotSelections');
+  const clientSaveKeyPeople = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    people: ClientKeyPerson[]; 
+    config?: SectionConfig 
+  }, { success: boolean }>(functions, 'clientSaveKeyPeople');
+  const clientSavePhotoRequests = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    requests: ClientPhotoRequest[]; 
+    config?: SectionConfig 
+  }, { success: boolean }>(functions, 'clientSavePhotoRequests');
+  const clientSaveGroupShotSelections = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    allLocalItems: ClientGroupShotItem[];
+    config?: SectionConfig
+   }, { success: boolean }>(functions, 'clientSaveGroupShotSelections');
   // For timeline, we'll need to handle complete replacement differently
   const clientSaveTimelineEvents = httpsCallable<{ projectId: string; accessToken: string; newEvent: ClientTimelineEvent }, { success: boolean }>(functions, 'clientSaveTimelineEvents');
 
@@ -364,20 +379,26 @@ import {
             break;
 
           case 'keyPeople':
+            const keyPeopleData = data as PortalKeyPeopleData;
             await clientSaveKeyPeople({
               projectId,
               accessToken,
-              items: (data as PortalKeyPeopleData).items || [],
-              config: (data as PortalKeyPeopleData).config || {}
+              people: keyPeopleData.items || [],
+              config: keyPeopleData.config
+              // items: (data as PortalKeyPeopleData).items || [],
+              // config: (data as PortalKeyPeopleData).config || {}
             });
             break;
 
           case 'photoRequests':
+            const photoRequestsData = data as PortalPhotoRequestData;
             await clientSavePhotoRequests({
               projectId,
               accessToken,
-              items: (data as PortalPhotoRequestData).items || [],
-              config: (data as PortalPhotoRequestData).config || {}
+              requests: photoRequestsData.items || [],
+              config: photoRequestsData.config
+              // requests: (data as PortalPhotoRequestData).items || [],
+              // config: (data as PortalPhotoRequestData).config || {}
             });
             break;
 
