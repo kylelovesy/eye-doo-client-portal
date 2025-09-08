@@ -12,7 +12,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, MapPin, Pencil, CheckCircle, Lock, X } from 'lucide-react';
-import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils'; 
+import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils';
+
+/**
+ * LocationsSection Component
+ *
+ * Uses the new combined portal activity functions:
+ * - updateClientPortalActivity: Handles all client-side portal interactions
+ * - logPortalActivity: Tracks user behavior for analytics
+ *
+ * Benefits: Reduced function calls, better performance, centralized logging
+ */ 
 
 const emptyLocation: Omit<ClientLocation, 'id'> = {
     locationName: '',
@@ -35,7 +45,14 @@ const EmptyState = () => (
 );
 
 export const LocationsSection: React.FC = () => {
-    const { locations, updateLocations, project, isSaving, showSaveConfirmation } = usePortalStore();
+    const {
+        locations,
+        updateLocations,
+        project,
+        isSaving,
+        showSaveConfirmation,
+        logAnalyticsEvent // New: Analytics logging function
+    } = usePortalStore();
     const [formState, setFormState] = useState(emptyLocation);
     const [showActionRequired, setShowActionRequired] = useState(true);
 
@@ -57,6 +74,8 @@ export const LocationsSection: React.FC = () => {
         }
     });
 
+    const isMultiLocation = locations?.config?.multipleLocations ?? false;
+
     useEffect(() => {
         if (editingEntity) {
             setFormState({
@@ -64,14 +83,29 @@ export const LocationsSection: React.FC = () => {
                 nextLocationTravelTimeEstimate: editingEntity.nextLocationTravelTimeEstimate || 0,
                 nextLocationTravelArrangements: editingEntity.nextLocationTravelArrangements || '',
             });
+
+            // Analytics: Track location editing
+            logAnalyticsEvent('location_edited', {
+                locationId: editingEntity.id,
+                locationType: editingEntity.locationType,
+                locationName: editingEntity.locationName
+            });
         } else {
             setFormState(emptyLocation);
         }
-    }, [editingEntity]);
+    }, [editingEntity, logAnalyticsEvent]);
+
+    // Analytics: Track component view
+    useEffect(() => {
+        logAnalyticsEvent('locations_section_viewed', {
+            totalLocations: locations?.items?.length || 0,
+            isMultiLocation,
+            isLocked,
+            isFinalized
+        });
+    }, [logAnalyticsEvent, locations?.items?.length, isMultiLocation, isLocked, isFinalized]);
 
     if (!locations) return <div>Loading...</div>;
-
-    const isMultiLocation = locations?.config?.multipleLocations ?? false;
 
     return (
         <div className="max-w-6xl mx-auto px-2">
@@ -128,8 +162,13 @@ export const LocationsSection: React.FC = () => {
                         />
                         <Label htmlFor="multipleLocations" className="font-sans">Multiple locations</Label>
                     </div>
-                    <Button onClick={openAddModal} disabled={isLocked} size="sm" className="text-lg h-8 tracking-wide">
-                        Add Location
+                    <Button
+                        onClick={openAddModal}
+                        disabled={isLocked || (!isMultiLocation && (locations?.items ?? []).length >= 1)}
+                        size="sm"
+                        className="text-lg h-8 tracking-wide"
+                    >
+                        {!isMultiLocation && (locations?.items ?? []).length >= 1 ? 'Location Added' : 'Add Location'}
                     </Button>
                 </div>
             </div>

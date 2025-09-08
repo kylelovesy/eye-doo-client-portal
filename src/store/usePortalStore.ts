@@ -17,6 +17,7 @@ import {
 interface PortalState {
   isLoading: boolean;
   isSaving: boolean;
+  isSkipping: boolean;
   error: string | null;
   projectId: string | null;
   accessToken: string | null;
@@ -48,6 +49,12 @@ interface PortalActions {
   resetSaveSuccess: () => void; // New action to reset success state
   setShowSaveConfirmation: (show: boolean, sectionId?: PortalStepID) => void;
   confirmSaveSection: () => Promise<void>;
+  // New actions for enhanced portal functionality
+  photographerManageSection: (sectionId: PortalStepID, action: 'approve' | 'request_revision', revisionReason?: string) => Promise<{ success: boolean; action: string }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  performBatchOperations: (operations: Array<{ type: 'track_access' | 'update_step' | 'submit_section'; data: any }>) => Promise<{ success: boolean; results: Array<{ type: string; success: boolean; error?: string }> }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  logAnalyticsEvent: (activityType: string, metadata?: Record<string, any>) => Promise<{ success: boolean }>;
 }
 
 // Define a union type for the data that can be saved
@@ -59,6 +66,7 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
   // --- INITIAL STATE ---
   isLoading: true,
   isSaving: false,
+  isSkipping: false,
   error: null,
   projectId: null,
   accessToken: null,
@@ -137,7 +145,7 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
 
     const updatedProject = { ...project, portalSteps: updatedSteps };
 
-    set({ isSaving: true, error: null, project: updatedProject });
+    set({ isSkipping: true, error: null, project: updatedProject });
 
     try {
       // Save to firestore via portalService
@@ -202,8 +210,8 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
       // First save the section data
       await portalService.saveSectionData(projectId, accessToken, sectionType, sectionData);
   
-      console.log('updateSectionStatus', projectId, accessToken, currentSectionToSave);
-      // Then update the section status using the enum value directly
+      // Update section status using the new combined updateClientPortalActivity function
+      // Benefits: Single function handles all client portal interactions
       await portalService.updateSectionStatus(projectId, accessToken, currentSectionToSave);
   
       // Refresh data by calling initialize again
@@ -240,7 +248,76 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
 
   clearError: () => set({ error: null }),
   resetSaveSuccess: () => set({ saveSuccess: false }), // Action to reset success state
-  
+
+  // Enhanced photographer section management
+  // Benefits: Single function for all photographer actions, better state management
+  photographerManageSection: async (sectionId, action, revisionReason) => {
+    const { projectId } = get();
+
+    if (!projectId) {
+      throw new Error("Cannot manage section: Portal not properly initialized.");
+    }
+
+    try {
+      const result = await portalService.photographerManageSection(
+        projectId,
+        sectionId,
+        action,
+        revisionReason
+      );
+      return result;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to manage section.' });
+      throw error;
+    }
+  },
+
+  // Batch portal operations for improved performance
+  // Benefits: Reduces network calls, ensures consistency across operations
+  performBatchOperations: async (operations) => {
+    const { projectId, accessToken } = get();
+
+    if (!projectId || !accessToken) {
+      throw new Error("Cannot perform batch operations: Portal not properly initialized.");
+    }
+
+    try {
+      const result = await portalService.batchPortalOperations(
+        projectId,
+        accessToken,
+        operations
+      );
+      return result;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to perform batch operations.' });
+      throw error;
+    }
+  },
+
+  // Enhanced analytics logging for better insights
+  // Benefits: Centralized activity tracking, session management, user behavior insights
+  logAnalyticsEvent: async (activityType, metadata) => {
+    const { projectId, accessToken } = get();
+
+    if (!projectId || !accessToken) {
+      // Don't throw error for analytics failures to avoid disrupting user flow
+      return { success: false };
+    }
+
+    try {
+      const result = await portalService.logPortalActivity(
+        projectId,
+        accessToken,
+        activityType,
+        metadata
+      );
+      return result;
+    } catch (error) {
+      // Don't set error state for analytics failures to avoid disrupting user flow
+      return { success: false };
+    }
+  },
+
 });
 
 // Helper function to get current section data - MOVED OUTSIDE the store

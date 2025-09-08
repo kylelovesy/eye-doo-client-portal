@@ -11,7 +11,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, ListChecks, CheckCircle, Lock, Pencil, X } from 'lucide-react';
-import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils'; 
+import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils';
+
+/**
+ * TimelineSection Component
+ *
+ * Uses the new combined portal activity functions:
+ * - updateClientPortalActivity: Handles all client-side portal interactions
+ * - logPortalActivity: Tracks user behavior for analytics
+ *
+ * Benefits: Reduced function calls, better performance, centralized logging
+ */ 
 
 const emptyEvent: Omit<ClientTimelineEvent, 'id' | 'startTime'> = {
     title: '',
@@ -31,7 +41,14 @@ const EmptyState = () => (
 
 
 export const TimelineSection: React.FC = () => {
-    const { timeline, updateTimeline } = usePortalStore();
+    const {
+        timeline,
+        updateTimeline,
+        project,
+        isSaving,
+        showSaveConfirmation,
+        logAnalyticsEvent // New: Analytics logging function
+    } = usePortalStore();
     const [formState, setFormState] = useState(emptyEvent);
     const [startTimeString, setStartTimeString] = useState('');
     const [showActionRequired, setShowActionRequired] = useState(true);
@@ -59,17 +76,46 @@ export const TimelineSection: React.FC = () => {
         if (editingEntity) {
             setFormState(editingEntity);
             setStartTimeString(timestampToTimeString(editingEntity.startTime));
+
+            // Analytics: Track event editing
+            logAnalyticsEvent('timeline_event_edited', {
+                eventId: editingEntity.id,
+                eventTitle: editingEntity.title,
+                eventType: editingEntity.type,
+                duration: editingEntity.duration
+            });
         } else {
             setFormState(emptyEvent);
             setStartTimeString('');
         }
-    }, [editingEntity]);
+    }, [editingEntity, logAnalyticsEvent]);
+
+    // Analytics: Track component view
+    useEffect(() => {
+        logAnalyticsEvent('timeline_section_viewed', {
+            totalEvents: timeline?.items?.length || 0,
+            isLocked,
+            isFinalized
+        });
+    }, [logAnalyticsEvent, timeline?.items?.length, isLocked, isFinalized]);
 
     const handleSaveWithTimeConversion = () => {
         const eventData = {
             ...formState,
             startTime: timeStringToTimestamp(startTimeString)!,
         };
+
+        // Analytics: Track event creation
+        logAnalyticsEvent('timeline_event_created', {
+            eventTitle: formState.title,
+            eventType: formState.type,
+            duration: formState.duration,
+            startTime: startTimeString,
+            hasNotes: !!formState.clientNotes,
+            notesLength: formState.clientNotes?.length || 0,
+            isEdit: !!editingEntity
+        });
+
         handleSave(eventData);
     };
 
@@ -208,6 +254,19 @@ export const TimelineSection: React.FC = () => {
                     </div>
                 </div>
             </AddEditModal>
+
+            {/* Enhanced Saving Overlay */}
+            {isSaving && showSaveConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm mx-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-lg font-medium">Completing section...</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Locking Timeline and sending to {project?.photographerName || 'photographer'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

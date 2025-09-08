@@ -259,13 +259,54 @@ import {
     config?: SectionConfig
    }, { success: boolean }>(functions, 'clientSaveGroupShotSelections');
   // For timeline, we'll need to handle complete replacement differently
-  const clientSaveTimelineEvents = httpsCallable<{ projectId: string; accessToken: string; newEvent: ClientTimelineEvent }, { success: boolean }>(functions, 'clientSaveTimelineEvents');
+  const clientSaveTimeline = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    events: ClientTimelineEvent[]; 
+    config?: SectionConfig
+   }, { success: boolean }>(functions, 'clientSaveTimeline');
 
-  const trackClientAccess = httpsCallable<{ projectId: string; accessToken: string }, { success: boolean }>(functions, 'trackClientAccess');
-  const updateClientCurrentStep = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, { success: boolean }>(functions, 'updateClientCurrentStep');
+ 
+  // Combined client portal activity function
+  const updateClientPortalActivity = httpsCallable<{
+    projectId: string;
+    accessToken: string;
+    action: 'access' | 'navigate' | 'submit';
+    stepId?: string;
+    sectionId?: string;
+  }, { success: boolean; action: string }>(functions, 'updateClientPortalActivity');
 
-  // Add callable function
-  const updateSectionStatus = httpsCallable<{ projectId: string; accessToken: string; sectionId: string }, { success: boolean }>(functions, 'updateSectionStatus');
+  // Combined photographer section management function
+  // Replaces: photographerApproveSection, photographerRequestRevision
+  // Benefits: Single function for all photographer actions, better state management
+  const photographerManageSection = httpsCallable<{
+    projectId: string;
+    sectionId: string;
+    action: 'approve' | 'request_revision';
+    revisionReason?: string;
+  }, { success: boolean; action: string }>(functions, 'photographerManageSection');
+
+  // Batch portal operations function
+  // Benefits: Handle multiple portal operations in a single atomic transaction
+  // Reduces network calls and ensures consistency
+  const batchPortalOperations = httpsCallable<{
+    projectId: string;
+    accessToken: string;
+    operations: Array<{
+      type: 'track_access' | 'update_step' | 'submit_section';
+      data: Record<string, unknown>;
+    }>;
+  }, { success: boolean; results: Array<{ type: string; success: boolean; error?: string }> }>(functions, 'batchPortalOperations');
+
+  // Enhanced analytics logging function
+  // Benefits: Centralized activity logging for better insights
+  const logPortalActivity = httpsCallable<{
+    projectId: string;
+    accessToken: string;
+    activityType: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metadata?: Record<string, any>;
+  }, { success: boolean }>(functions, 'logPortalActivity');
 
   // Skip step function - commented out as it's not implemented in firestore functions
   // const skipStepFunction = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, { success: boolean }>(functions, 'skipStep');
@@ -291,7 +332,11 @@ import {
         await signInWithCustomToken(auth, customToken);
 
         // Track client access (increment count and update activity timestamp)
-        await trackClientAccess({ projectId, accessToken: token });
+        await updateClientPortalActivity({
+          projectId,
+          accessToken: token,
+          action: 'access'
+        });
   
         // Fetch the main project document
         const projectRef = doc(db, 'projects', projectId);
@@ -414,21 +459,15 @@ import {
             break;
 
           case 'timeline':
-            // For timeline, we need to save each event individually since the firestore function
-            // only supports adding single events with arrayUnion
-            // Note: This approach may not be ideal for replacing entire timeline.
-            // Consider updating the firestore function to support complete replacement.
+            // Enhanced timeline saving with complete replacement support
+            // Benefits: Atomic timeline updates, supports config, better performance
             const timelineData = data as PortalTimelineData;
-            const timelineEvents = timelineData.items || [];
-            if (timelineEvents.length > 0) {
-              // Save each event individually (this may create duplicates if events already exist)
-              // For now, we'll save the first event as an example
-              await clientSaveTimelineEvents({
-                projectId,
-                accessToken,
-                newEvent: timelineEvents[0]
-              });
-            }
+            await clientSaveTimeline({
+              projectId,
+              accessToken,
+              events: timelineData.items || [],
+              config: timelineData.config
+            });
             break;
 
           default:
@@ -452,7 +491,12 @@ import {
     stepId: string
   ): Promise<void> => {
     try {
-      await updateClientCurrentStep({ projectId, accessToken, stepId });
+      await updateClientPortalActivity({
+        projectId,
+        accessToken,
+        action: 'navigate',
+        stepId
+      });
     } catch (error) {
       console.error(`Error updating current step to ${stepId}:`, error);
       throw new Error('Failed to update current step.');
@@ -483,10 +527,102 @@ import {
     sectionId: string
   ): Promise<void> => {
     try {
-      await updateSectionStatus({ projectId, accessToken, sectionId });
+      await updateClientPortalActivity({
+        projectId,
+        accessToken,
+        action: 'submit',
+        sectionId
+      });
     } catch (error) {
       console.error(`Error updating section status for ${sectionId}:`, error);
       throw new Error('Failed to update section status.');
+    }
+  },
+
+  /**
+   * Photographer section management - approve or request revision
+   * Benefits: Single function for all photographer actions, better state management
+   * @param projectId - The ID of the project
+   * @param sectionId - The section to manage
+   * @param action - 'approve' or 'request_revision'
+   * @param revisionReason - Required if action is 'request_revision'
+   */
+  photographerManageSection: async (
+    projectId: string,
+    sectionId: string,
+    action: 'approve' | 'request_revision',
+    revisionReason?: string
+  ): Promise<{ success: boolean; action: string }> => {
+    try {
+      const result = await photographerManageSection({
+        projectId,
+        sectionId,
+        action,
+        revisionReason
+      });
+      return result.data;
+    } catch (error) {
+      console.error(`Error managing section ${sectionId} with action ${action}:`, error);
+      throw new Error(`Failed to ${action} section.`);
+    }
+  },
+
+  /**
+   * Batch portal operations - handle multiple operations atomically
+   * Benefits: Reduces network calls, ensures consistency across operations
+   * @param projectId - The ID of the project
+   * @param accessToken - Client access token
+   * @param operations - Array of operations to perform
+   */
+  batchPortalOperations: async (
+    projectId: string,
+    accessToken: string,
+    operations: Array<{
+      type: 'track_access' | 'update_step' | 'submit_section';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: any;
+    }>
+  ): Promise<{ success: boolean; results: Array<{ type: string; success: boolean; error?: string }> }> => {
+    try {
+      const result = await batchPortalOperations({
+        projectId,
+        accessToken,
+        operations
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error performing batch portal operations:', error);
+      throw new Error('Failed to perform batch operations.');
+    }
+  },
+
+  /**
+   * Enhanced analytics logging for better insights
+   * Benefits: Centralized activity tracking, session management, user behavior insights
+   * @param projectId - The ID of the project
+   * @param accessToken - Client access token
+   * @param activityType - Type of activity being logged
+   * @param metadata - Additional metadata for the activity
+   */
+  logPortalActivity: async (
+    projectId: string,
+    accessToken: string,
+    activityType: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metadata?: Record<string, any>
+  ): Promise<{ success: boolean }> => {
+    try {
+      const result = await logPortalActivity({
+        projectId,
+        accessToken,
+        activityType,
+        metadata
+      });
+      return result.data;
+    } catch (error) {
+      console.error(`Error logging portal activity ${activityType}:`, error);
+      // Don't throw error for logging failures to avoid disrupting user flow
+      return { success: false };
     }
   },
 };

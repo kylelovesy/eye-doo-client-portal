@@ -40,6 +40,16 @@ import {
   X,
 } from 'lucide-react';
 
+/**
+ * KeyPeopleSection Component
+ *
+ * Uses the new combined portal activity functions:
+ * - updateClientPortalActivity: Handles all client-side portal interactions
+ * - logPortalActivity: Tracks user behavior for analytics
+ *
+ * Benefits: Reduced function calls, better performance, centralized logging
+ */
+
 const emptyPerson: Omit<ClientKeyPerson, 'id'> = {
   fullName: '',
   role: KeyPersonRole.OTHER,
@@ -64,13 +74,15 @@ const EmptyState = () => (
 );
 
 export const KeyPeopleSection: React.FC = () => {
-  const { 
-    keyPeople, 
-    updateKeyPeople, 
-    skipStep, 
-    isSaving, 
+  const {
+    keyPeople,
+    updateKeyPeople,
+    skipStep,
+    isSaving,
+    isSkipping,
     project,
-    showSaveConfirmation 
+    showSaveConfirmation,
+    logAnalyticsEvent // New: Analytics logging function
   } = usePortalStore();
   const [formState, setFormState] = useState(emptyPerson);
   const [showActionRequired, setShowActionRequired] = useState(true);
@@ -101,10 +113,28 @@ export const KeyPeopleSection: React.FC = () => {
   useEffect(() => {
     if (editingEntity) {
       setFormState(editingEntity);
+
+      // Analytics: Track person editing
+      logAnalyticsEvent('key_person_edited', {
+        personId: editingEntity.id,
+        personName: editingEntity.fullName,
+        role: editingEntity.role,
+        involvement: editingEntity.involvement
+      });
     } else {
       setFormState(emptyPerson);
     }
-  }, [editingEntity]);
+  }, [editingEntity, logAnalyticsEvent]);
+
+  // Analytics: Track component view
+  useEffect(() => {
+    logAnalyticsEvent('key_people_section_viewed', {
+      totalPeople: keyPeople?.items?.length || 0,
+      isLocked,
+      isFinalized,
+      canSkipStep
+    });
+  }, [logAnalyticsEvent, keyPeople?.items?.length, isLocked, isFinalized, canSkipStep]);
 
   if (!keyPeople) return <div>Loading...</div>;
 
@@ -262,7 +292,22 @@ export const KeyPeopleSection: React.FC = () => {
       <AddEditModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        onSave={() => handleSave(formState)}
+        onSave={() => {
+          // Analytics: Track person creation
+          logAnalyticsEvent('key_person_created', {
+            personName: formState.fullName,
+            role: formState.role,
+            involvement: formState.involvement,
+            hasNotes: !!formState.notes,
+            notesLength: formState.notes?.length || 0,
+            isVIP: formState.isVIP,
+            canRallyPeople: formState.canRallyPeople,
+            mustPhotograph: formState.mustPhotograph,
+            dontPhotograph: formState.dontPhotograph,
+            isEdit: !!editingEntity
+          });
+          handleSave(formState);
+        }}
         entity={formState} // WHAT: Added the missing 'entity' prop. WHY: This prop is required by AddEditModal to manage the data being edited.
         title={editingEntity ? 'Edit Person' : 'Add New Person'}
         description="Please fill in the details for the key person below."
@@ -415,12 +460,19 @@ export const KeyPeopleSection: React.FC = () => {
           </div>
         </div>
       </AddEditModal>
-
+      {isSkipping && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-lg font-medium">Skipping Key People...</p>
+          </div>
+        </div>
+      )}
       {isSaving && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg font-medium">Skipping step...</p>
+            <p className="text-lg font-medium">Saving Key People...</p>
           </div>
         </div>
       )}

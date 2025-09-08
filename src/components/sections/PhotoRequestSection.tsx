@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePortalStore } from '@/store/usePortalStore';
-import { ClientPhotoRequest, PhotoRequestType, PhotoRequestPriority, ActionOn } from '@/types/types';
+import { ClientPhotoRequest, PhotoRequestType, PhotoRequestPriority, ActionOn, PortalStepID } from '@/types/types';
 import { useEntityManagement } from '@/lib/useEntityManagement';
 import { AddEditModal } from '@/components/ui/AddEditModal';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -14,6 +14,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Camera, Pencil, CheckCircle, Lock, X } from 'lucide-react';
+
+/**
+ * PhotoRequestsSection Component
+ *
+ * Uses the new combined portal activity functions:
+ * - updateClientPortalActivity: Handles all client-side portal interactions
+ * - logPortalActivity: Tracks user behavior for analytics
+ *
+ * Benefits: Reduced function calls, better performance, centralized logging
+ */
 
 const storage = getStorage(app);
 
@@ -35,7 +45,17 @@ const EmptyState = () => (
 );
 
 export const PhotoRequestsSection: React.FC = () => {
-    const { photoRequests, updatePhotoRequests, projectId, project, isSaving, showSaveConfirmation } = usePortalStore();
+    const {
+        photoRequests,
+        updatePhotoRequests,
+        projectId,
+        project,
+        isSaving,
+        showSaveConfirmation,
+        isSkipping,
+        skipStep,
+        logAnalyticsEvent // New: Analytics logging function
+    } = usePortalStore();
     const [formState, setFormState] = useState(emptyRequest);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -44,6 +64,11 @@ export const PhotoRequestsSection: React.FC = () => {
     const isLocked = photoRequests?.config?.locked || photoRequests?.config?.finalized;
     const isFinalized = photoRequests?.config?.finalized;
     const actionOn = isLocked ? ActionOn.PHOTOGRAPHER : ActionOn.CLIENT;
+
+    const currentStepData = project?.portalSteps.find(
+        (step) => step.id === 'photoRequests'
+    );
+    const canSkipStep = currentStepData?.requiredStep === false;
 
     const {
         isModalOpen,
@@ -71,8 +96,20 @@ export const PhotoRequestsSection: React.FC = () => {
 
     const handleSubmitWithUpload = async () => {
         if (!projectId) return;
-        
+
         let imageUrl = editingEntity?.imageUrl || '';
+        const hasImageUpload = !!selectedFile;
+
+        // Analytics: Track request creation
+        logAnalyticsEvent('photo_request_created', {
+            title: formState.title,
+            type: formState.type,
+            priority: formState.priority,
+            hasDescription: !!formState.description,
+            descriptionLength: formState.description?.length || 0,
+            hasImageUpload,
+            isEdit: !!editingEntity
+        });
 
         if (selectedFile) {
             const storageRef = ref(storage, `projects/${projectId}/photo_requests/${Date.now()}_${selectedFile.name}`);
@@ -81,19 +118,44 @@ export const PhotoRequestsSection: React.FC = () => {
             await new Promise<void>((resolve, reject) => {
                 uploadTask.on('state_changed',
                     (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
-                    (error) => { console.error("Upload failed:", error); reject(error); },
+                    (error) => {
+                        console.error("Upload failed:", error);
+                        // Analytics: Track upload failure
+                        logAnalyticsEvent('photo_request_upload_failed', {
+                            fileSize: selectedFile.size,
+                            fileType: selectedFile.type,
+                            error: error.message
+                        });
+                        reject(error);
+                    },
                     async () => {
                         imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                        // Analytics: Track successful upload
+                        logAnalyticsEvent('photo_request_upload_success', {
+                            fileSize: selectedFile.size,
+                            fileType: selectedFile.type
+                        });
                         resolve();
                     }
                 );
             });
         }
-        
+
         handleSave({ ...formState, imageUrl });
     };
 
     const hasReachedLimit = photoRequests ? (photoRequests.items ?? []).length >= 5 : false;
+
+    // Analytics: Track component view
+    useEffect(() => {
+        logAnalyticsEvent('photo_requests_section_viewed', {
+            totalRequests: photoRequests?.items?.length || 0,
+            hasReachedLimit,
+            isLocked,
+            isFinalized,
+            canSkipStep
+        });
+    }, [logAnalyticsEvent, photoRequests?.items?.length, hasReachedLimit, isLocked, isFinalized, canSkipStep]);
 
     if (!photoRequests) return <div>Loading...</div>;
 
@@ -125,7 +187,7 @@ export const PhotoRequestsSection: React.FC = () => {
                         </AlertDescription>
                     </Alert>
                 )}
-                {actionOn === ActionOn.CLIENT && !isLocked && !isFinalized && showActionRequired && (
+                {actionOn === ActionOn.CLIENT && !isLocked && !isFinalized && currentStepData?.requiredStep !== false && showActionRequired && (
                     <Alert variant="default" className="max-w-3xl mx-auto mb-4 relative text-left py-2">
                         {/* <UserCheck className="h-4 w-4" /> */}
                         <AlertTitle>Action Required</AlertTitle>
@@ -142,10 +204,21 @@ export const PhotoRequestsSection: React.FC = () => {
                 )}
             </div>
 
-            <div className="flex justify-center mb-6">
+            <div className="flex flex-col md:flex-row justify-center gap-2 mb-4">
                 <Button onClick={openAddModal} disabled={hasReachedLimit || isLocked} size="sm" variant="default" className="w-full text-lg h-8 tracking-wide">
                     {hasReachedLimit ? 'Request Limit Reached' : 'Add Request'}
                 </Button>
+                {canSkipStep && !isLocked && (
+                    <Button
+                        onClick={() => skipStep(PortalStepID.PHOTO_REQUESTS)}
+                        disabled={isSaving}
+                        variant="outline"
+                        size="sm"
+                        className="text-lg h-8 tracking-wide"
+                    >
+                        Skip Step
+                    </Button>
+                )}
             </div>
 
             {(photoRequests.items ?? []).length > 0 ? (
@@ -240,6 +313,15 @@ export const PhotoRequestsSection: React.FC = () => {
                     </div> */}
                 </div>
             </AddEditModal>
+
+            {isSkipping && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-lg font-medium">Skipping Photo Requests...</p>
+                    </div>
+                </div>
+            )}
 
             {/* Enhanced Saving Overlay */}
             {isSaving && showSaveConfirmation && (
