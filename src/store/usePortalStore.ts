@@ -179,7 +179,7 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
 
   confirmSaveSection: async () => {
     const { projectId, accessToken, currentSectionToSave, project } = get();
-    
+    console.log('confirmSaveSection', projectId, accessToken, currentSectionToSave, project);
     if (!projectId || !accessToken || !currentSectionToSave || !project) {
       set({ error: "Cannot save section: Missing required data." });
       return;
@@ -190,16 +190,19 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
   
       // Get the current section data using the helper function
       const sectionData = getCurrentSectionData();
+      console.log('sectionData', sectionData);
       if (!sectionData) {
         throw new Error("No data to save for this section.");
       }
       
       // Map PortalStepID enum to the expected string type for saveSectionData
       const sectionType = mapStepIdToSectionType(currentSectionToSave);
+      console.log('sectionType', sectionType);
       
       // First save the section data
       await portalService.saveSectionData(projectId, accessToken, sectionType, sectionData);
   
+      console.log('updateSectionStatus', projectId, accessToken, currentSectionToSave);
       // Then update the section status using the enum value directly
       await portalService.updateSectionStatus(projectId, accessToken, currentSectionToSave);
   
