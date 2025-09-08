@@ -124,6 +124,13 @@ export const PortalStepSchema = z.object({
 });
 export type PortalStep = z.infer<typeof PortalStepSchema>;
 
+// Client Portal Metadata Schema
+export const ClientPortalMetadataSchema = z.object({
+  clientAccessCount: z.number().default(0),
+  lastClientActivity: FirestoreTimestampSchema.optional().nullable(),
+});
+export type ClientPortalMetadata = z.infer<typeof ClientPortalMetadataSchema>;
+
 // This is the main schema for the data passed to the client portal
 export const ClientProjectSchema = z.object({
   id: z.string(),
@@ -135,8 +142,11 @@ export const ClientProjectSchema = z.object({
   portalMessage: z.string().optional(),
   currentStepID: z.nativeEnum(PortalStepID),
   portalSteps: z.array(PortalStepSchema),
+  metadata: ClientPortalMetadataSchema.optional(),
 });
 export type ClientProject = z.infer<typeof ClientProjectSchema>;
+
+
 
 // Project
 // export const ClientPortalProjectSchema = z.object({
@@ -185,6 +195,7 @@ const SectionConfigSchema = z.object({
   finalized: z.boolean().default(false),
   locked: z.boolean().default(false),
   updatedAt: FirestoreTimestampSchema.optional().nullable(),
+  multipleLocations: z.boolean().default(false), // Add this for locations
 });
 export type SectionConfig = z.infer<typeof SectionConfigSchema>;
 

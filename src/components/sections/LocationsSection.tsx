@@ -35,7 +35,7 @@ const EmptyState = () => (
 );
 
 export const LocationsSection: React.FC = () => {
-    const { locations, updateLocations } = usePortalStore();
+    const { locations, updateLocations, project, isSaving, showSaveConfirmation } = usePortalStore();
     const [formState, setFormState] = useState(emptyLocation);
     const [showActionRequired, setShowActionRequired] = useState(true);
 
@@ -244,6 +244,19 @@ export const LocationsSection: React.FC = () => {
                     </div> */}
                 </div>
             </AddEditModal>
+
+            {/* Enhanced Saving Overlay */}
+            {isSaving && showSaveConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm mx-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-lg font-medium">Completing section...</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Locking Locations and sending to {project?.photographerName || 'photographer'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

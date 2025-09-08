@@ -35,7 +35,7 @@ const EmptyState = () => (
 );
 
 export const PhotoRequestsSection: React.FC = () => {
-    const { photoRequests, updatePhotoRequests, projectId } = usePortalStore();
+    const { photoRequests, updatePhotoRequests, projectId, project, isSaving, showSaveConfirmation } = usePortalStore();
     const [formState, setFormState] = useState(emptyRequest);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -240,6 +240,19 @@ export const PhotoRequestsSection: React.FC = () => {
                     </div> */}
                 </div>
             </AddEditModal>
+
+            {/* Enhanced Saving Overlay */}
+            {isSaving && showSaveConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm mx-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-lg font-medium">Completing section...</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Locking Photo Requests and sending to {project?.photographerName || 'photographer'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

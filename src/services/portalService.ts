@@ -234,12 +234,23 @@ import {
   const getPortalAuthToken = httpsCallable<AuthRequest, AuthResponse>(functions, 'getPortalAuthToken');
 
   // Individual save functions for each section
-  const clientSaveLocations = httpsCallable<{ projectId: string; accessToken: string; locations: ClientLocation[] }, { success: boolean }>(functions, 'clientSaveLocations');
-  const clientSaveKeyPeople = httpsCallable<{ projectId: string; accessToken: string; items: ClientKeyPerson[]; config: SectionConfig }, { success: boolean }>(functions, 'clientSaveKeyPeople');
-  const clientSavePhotoRequests = httpsCallable<{ projectId: string; accessToken: string; items: ClientPhotoRequest[]; config: SectionConfig }, { success: boolean }>(functions, 'clientSavePhotoRequests');
+  const clientSaveLocations = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    locations: ClientLocation[];
+    config?: SectionConfig 
+  }, { success: boolean }>(functions, 'clientSaveLocations');
+  const clientSaveKeyPeople = httpsCallable<{ projectId: string; accessToken: string; items: ClientKeyPerson[]; config?: SectionConfig }, { success: boolean }>(functions, 'clientSaveKeyPeople');
+  const clientSavePhotoRequests = httpsCallable<{ projectId: string; accessToken: string; items: ClientPhotoRequest[]; config?: SectionConfig }, { success: boolean }>(functions, 'clientSavePhotoRequests');
   const clientSaveGroupShotSelections = httpsCallable<{ projectId: string; accessToken: string; allLocalItems: ClientGroupShotItem[] }, { success: boolean }>(functions, 'clientSaveGroupShotSelections');
   // For timeline, we'll need to handle complete replacement differently
   const clientSaveTimelineEvents = httpsCallable<{ projectId: string; accessToken: string; newEvent: ClientTimelineEvent }, { success: boolean }>(functions, 'clientSaveTimelineEvents');
+
+  const trackClientAccess = httpsCallable<{ projectId: string; accessToken: string }, { success: boolean }>(functions, 'trackClientAccess');
+  const updateClientCurrentStep = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, { success: boolean }>(functions, 'updateClientCurrentStep');
+
+  // Add callable function
+  const updateSectionStatus = httpsCallable<{ projectId: string; accessToken: string; sectionId: string }, { success: boolean }>(functions, 'updateSectionStatus');
 
   // Skip step function - commented out as it's not implemented in firestore functions
   // const skipStepFunction = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, { success: boolean }>(functions, 'skipStep');
@@ -263,6 +274,9 @@ import {
   
         // Sign in anonymously with the custom token
         await signInWithCustomToken(auth, customToken);
+
+        // Track client access (increment count and update activity timestamp)
+        await trackClientAccess({ projectId, accessToken: token });
   
         // Fetch the main project document
         const projectRef = doc(db, 'projects', projectId);
@@ -331,75 +345,96 @@ import {
    * @param section - The name of the section being saved.
    * @param data - The data payload for that section.
    */
-  saveSectionData: async (
-    projectId: string,
-    accessToken: string,
-    section: SaveableData['type'],
-    data: SaveableData['data']
-  ): Promise<void> => {
-    try {
-      switch (section) {
-        case 'locations':
-          await clientSaveLocations({
-            projectId,
-            accessToken,
-            locations: (data as PortalLocationData).items || []
-          });
-          break;
-
-        case 'keyPeople':
-          await clientSaveKeyPeople({
-            projectId,
-            accessToken,
-            items: (data as PortalKeyPeopleData).items || [],
-            config: (data as PortalKeyPeopleData).config || {}
-          });
-          break;
-
-        case 'photoRequests':
-          await clientSavePhotoRequests({
-            projectId,
-            accessToken,
-            items: (data as PortalPhotoRequestData).items || [],
-            config: (data as PortalPhotoRequestData).config || {}
-          });
-          break;
-
-        case 'groupShots':
-          // For group shots, we need to get all items that are checked
-          const groupShotData = data as PortalGroupShotData;
-          const allLocalItems = (groupShotData.items || []).filter(item => item.checked);
-          await clientSaveGroupShotSelections({
-            projectId,
-            accessToken,
-            allLocalItems
-          });
-          break;
-
-        case 'timeline':
-          // For timeline, we need to save each event individually since the firestore function
-          // only supports adding single events with arrayUnion
-          // Note: This approach may not be ideal for replacing entire timeline.
-          // Consider updating the firestore function to support complete replacement.
-          const timelineData = data as PortalTimelineData;
-          const timelineEvents = timelineData.items || [];
-          if (timelineEvents.length > 0) {
-            // Save each event individually (this may create duplicates if events already exist)
-            // For now, we'll save the first event as an example
-            await clientSaveTimelineEvents({
+    saveSectionData: async (
+      projectId: string,
+      accessToken: string,
+      section: SaveableData['type'],
+      data: SaveableData['data']
+    ): Promise<void> => {
+      try {
+        switch (section) {
+          case 'locations':
+            const locationsData = data as PortalLocationData;
+            await clientSaveLocations({
               projectId,
               accessToken,
-              newEvent: timelineEvents[0]
+              locations: locationsData.items || [],
+              config: locationsData.config // Include config for multipleLocations
             });
-          }
-          break;
+            break;
 
-        default:
-          throw new Error(`Unknown section: ${section}`);
+          case 'keyPeople':
+            await clientSaveKeyPeople({
+              projectId,
+              accessToken,
+              items: (data as PortalKeyPeopleData).items || [],
+              config: (data as PortalKeyPeopleData).config || {}
+            });
+            break;
+
+          case 'photoRequests':
+            await clientSavePhotoRequests({
+              projectId,
+              accessToken,
+              items: (data as PortalPhotoRequestData).items || [],
+              config: (data as PortalPhotoRequestData).config || {}
+            });
+            break;
+
+          case 'groupShots':
+            // For group shots, we need to get all items that are checked
+            const groupShotData = data as PortalGroupShotData;
+            const allLocalItems = (groupShotData.items || []).filter(item => item.checked);
+            await clientSaveGroupShotSelections({
+              projectId,
+              accessToken,
+              allLocalItems
+            });
+            break;
+
+          case 'timeline':
+            // For timeline, we need to save each event individually since the firestore function
+            // only supports adding single events with arrayUnion
+            // Note: This approach may not be ideal for replacing entire timeline.
+            // Consider updating the firestore function to support complete replacement.
+            const timelineData = data as PortalTimelineData;
+            const timelineEvents = timelineData.items || [];
+            if (timelineEvents.length > 0) {
+              // Save each event individually (this may create duplicates if events already exist)
+              // For now, we'll save the first event as an example
+              await clientSaveTimelineEvents({
+                projectId,
+                accessToken,
+                newEvent: timelineEvents[0]
+              });
+            }
+            break;
+
+          default:
+            throw new Error(`Unknown section: ${section}`);
+        }
+      } catch (error) {
+        console.error(`Error saving ${section} data:`, error);
+        throw new Error(`Failed to save ${section}. Please try again.`);
       }
+    },
+
+    /**
+ * Updates the client's current step in Firestore
+ * @param projectId - The ID of the project
+ * @param accessToken - The client's access token
+ * @param stepId - The step ID to set as current
+ */
+  updateCurrentStep: async (
+    projectId: string,
+    accessToken: string,
+    stepId: string
+  ): Promise<void> => {
+    try {
+      await updateClientCurrentStep({ projectId, accessToken, stepId });
     } catch (error) {
-      console.error(`Error saving ${section} data:`, error);
-      throw new Error(`Failed to save ${section}. Please try again.`);
+      console.error(`Error updating current step to ${stepId}:`, error);
+      throw new Error('Failed to update current step.');
     }
   },
 
@@ -418,6 +453,20 @@ import {
     // For now, we'll throw an error
     console.warn(`Skip step functionality not implemented for step: ${stepId}`);
     throw new Error(`Skip step functionality is not yet available. Please contact support.`);
+  },
+
+  // Add method
+  updateSectionStatus: async (
+    projectId: string,
+    accessToken: string,
+    sectionId: string
+  ): Promise<void> => {
+    try {
+      await updateSectionStatus({ projectId, accessToken, sectionId });
+    } catch (error) {
+      console.error(`Error updating section status for ${sectionId}:`, error);
+      throw new Error('Failed to update section status.');
+    }
   },
 };
   

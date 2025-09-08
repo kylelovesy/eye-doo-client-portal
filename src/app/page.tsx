@@ -11,6 +11,8 @@ import { SunIcon, MoonIcon, ArrowLeftIcon, ArrowRightIcon, CheckCircle2, HomeIco
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SaveConfirmationDialog } from '@/components/ui/SaveConfirmationDialog';
+
 
 // Import Section Components
 import { LandingPageSection } from '@/components/sections/LandingPageSection';
@@ -62,7 +64,11 @@ const PortalPageContent: React.FC = () => {
         initialize,
         setStep,
         saveCurrentStep,
-        isDirty
+        isDirty,
+        showSaveConfirmation,
+        currentSectionToSave,
+        setShowSaveConfirmation,
+        confirmSaveSection,
     } = usePortalStore();
 
     useUnsavedChangesPrompt(isDirty);
@@ -121,6 +127,13 @@ const PortalPageContent: React.FC = () => {
             // Move to next/previous step
             targetIndex = direction === 'next' ? targetIndex + 1 : targetIndex - 1;
         }
+    };
+
+    // Add before the return statement
+    const getCurrentSectionName = () => {
+        if (!currentSectionToSave || !project) return '';
+        const step = project.portalSteps.find(s => s.id === currentSectionToSave);
+        return step?.stepTitle || '';
     };
 
     // Find the first step that is unlocked or in progress
@@ -304,7 +317,15 @@ const PortalPageContent: React.FC = () => {
                     </div>
                 ) : null;
             })()}
-        </div>
+        </div>  
+        <SaveConfirmationDialog
+            isOpen={showSaveConfirmation}
+            onClose={() => setShowSaveConfirmation(false)}
+            onConfirm={confirmSaveSection}
+            sectionName={getCurrentSectionName()}
+            photographerName={project?.photographerName || 'your photographer'}
+            isSaving={isSaving}
+        />
         </>
     );
 };

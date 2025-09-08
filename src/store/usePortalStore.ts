@@ -29,6 +29,8 @@ interface PortalState {
   timeline: PortalTimelineData | null;
   isDirty: boolean;
   saveSuccess: boolean; // New state for tracking save success
+  showSaveConfirmation: boolean;
+  currentSectionToSave: PortalStepID | null;
 }
 
 // Define the actions that can be performed on the state
@@ -44,6 +46,8 @@ interface PortalActions {
   saveCurrentStep: () => Promise<void>;
   clearError: () => void;
   resetSaveSuccess: () => void; // New action to reset success state
+  setShowSaveConfirmation: (show: boolean, sectionId?: PortalStepID) => void;
+  confirmSaveSection: () => Promise<void>;
 }
 
 // Define a union type for the data that can be saved
@@ -67,6 +71,8 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
   timeline: null,
   isDirty: false,
   saveSuccess: false, // Initial success state
+  showSaveConfirmation: false,
+  currentSectionToSave: null,
 
   // --- ACTIONS ---
   initialize: async (projectId, token) => {
@@ -89,10 +95,31 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
     }
   },
 
-  setStep: (stepId) => {
-    set({ currentStep: stepId });
+  setStep: async (stepId: PortalStepID) => {
+    const { projectId, accessToken } = get();
+    
+    if (!projectId || !accessToken) {
+      console.warn('Cannot update step: Portal not properly initialized');
+      return;
+    }
+  
+    try {
+      // Update local state immediately for responsive UI
+      set({ currentStep: stepId });
+      
+      // Update Firestore with the new current step
+      await portalService.updateCurrentStep(projectId, accessToken, stepId);
+      
+      // Note: Section data is already being listened to via listenToCategory in initialize()
+      // So the data will automatically update when the section changes
+      
+    } catch (error) {
+      console.error('Error updating current step:', error);
+      // Could optionally revert local state or show error to user
+    }
   },
 
+  
   skipStep: async (stepId) => {
     const { projectId, accessToken, project } = get();
 
@@ -146,6 +173,50 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
     }
   },
 
+  setShowSaveConfirmation: (show, sectionId) => {
+    set({ showSaveConfirmation: show, currentSectionToSave: sectionId || null });
+  },
+
+  confirmSaveSection: async () => {
+    const { projectId, accessToken, currentSectionToSave, project } = get();
+    
+    if (!projectId || !accessToken || !currentSectionToSave || !project) {
+      set({ error: "Cannot save section: Missing required data." });
+      return;
+    }
+  
+    try {
+      set({ isSaving: true, showSaveConfirmation: false, error: null });
+  
+      // Get the current section data using the helper function
+      const sectionData = getCurrentSectionData();
+      if (!sectionData) {
+        throw new Error("No data to save for this section.");
+      }
+      
+      // Map PortalStepID enum to the expected string type for saveSectionData
+      const sectionType = mapStepIdToSectionType(currentSectionToSave);
+      
+      // First save the section data
+      await portalService.saveSectionData(projectId, accessToken, sectionType, sectionData);
+  
+      // Then update the section status using the enum value directly
+      await portalService.updateSectionStatus(projectId, accessToken, currentSectionToSave);
+  
+      // Refresh data by calling initialize again
+      const result = await portalService.getInitialData(projectId, accessToken);
+      set({ project: result, currentStep: PortalStepID.WELCOME });
+  
+      // Reset dirty state and close any modals
+      set({ isDirty: false, currentSectionToSave: null });
+  
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to save section.' });
+    } finally {
+      set({ isSaving: false });
+    }
+  },
+
   // --- LOCAL DATA MUTATORS ---
   updateKeyPeople: (data) => set({ keyPeople: data, isDirty: true }),
   updateLocations: (data) => set({ locations: data, isDirty: true }),
@@ -153,48 +224,47 @@ const storeCreator: StateCreator<PortalState & PortalActions> = (set, get) => ({
   updatePhotoRequests: (data) => set({ photoRequests: data, isDirty: true }),
   updateTimeline: (data) => set({ timeline: data, isDirty: true }),
 
+  // Update saveCurrentStep to show confirmation instead of saving directly
   saveCurrentStep: async () => {
-    const { projectId, accessToken, currentStep, keyPeople, locations, groupShots, photoRequests, timeline } = get();
-
-    if (!projectId || !accessToken) {
-        if (!get().project) {
-            set({ error: "Cannot save: Portal not properly initialized." });
-            return;
-        }
-    }
-
-    let dataToSave: SaveableData | null = null;
-    let category: PortalStepID | null = null;
-    switch (currentStep) {
-      case PortalStepID.KEY_PEOPLE:    dataToSave = keyPeople; category = PortalStepID.KEY_PEOPLE; break;
-      case PortalStepID.LOCATIONS:     dataToSave = locations; category = PortalStepID.LOCATIONS; break;
-      case PortalStepID.GROUP_SHOTS:   dataToSave = groupShots; category = PortalStepID.GROUP_SHOTS; break;
-      case PortalStepID.PHOTO_REQUESTS: dataToSave = photoRequests; category = PortalStepID.PHOTO_REQUESTS; break;
-      case PortalStepID.TIMELINE:      dataToSave = timeline; category = PortalStepID.TIMELINE; break;
-      default:
-        console.warn(`No save action defined for step: ${currentStep}`);
-        return;
-    }
-
-    if (!dataToSave || !category) {
-      console.warn(`No data to save for step: ${currentStep}`);
+    const { currentStep } = get();
+    
+    if (currentStep === PortalStepID.WELCOME || currentStep === PortalStepID.THANK_YOU) {
       return;
     }
-
-    set({ isSaving: true, error: null });
-    try { 
-      await portalService.saveSectionData(projectId || '', accessToken || '', category, dataToSave);
-      set({ isDirty: false, saveSuccess: true }); // Set success state on successful save
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to save data.' });
-      throw err;
-    } finally {
-      set({ isSaving: false });
-    }
+    
+    set({ showSaveConfirmation: true, currentSectionToSave: currentStep });
   },
 
   clearError: () => set({ error: null }),
   resetSaveSuccess: () => set({ saveSuccess: false }), // Action to reset success state
+  
 });
+
+// Helper function to get current section data - MOVED OUTSIDE the store
+const getCurrentSectionData = (): SaveableData | null => {
+  const state = usePortalStore.getState();
+  const { currentSectionToSave, keyPeople, locations, groupShots, photoRequests, timeline } = state;
+  
+  switch (currentSectionToSave) {
+    case PortalStepID.KEY_PEOPLE: return keyPeople;
+    case PortalStepID.LOCATIONS: return locations;
+    case PortalStepID.GROUP_SHOTS: return groupShots;
+    case PortalStepID.PHOTO_REQUESTS: return photoRequests;
+    case PortalStepID.TIMELINE: return timeline;
+    default: return null;
+  }
+};
+
+// Helper function to map PortalStepID enum to section type string
+const mapStepIdToSectionType = (stepId: PortalStepID): 'keyPeople' | 'locations' | 'photoRequests' | 'groupShots' | 'timeline' => {
+  switch (stepId) {
+    case PortalStepID.KEY_PEOPLE: return 'keyPeople';
+    case PortalStepID.LOCATIONS: return 'locations';
+    case PortalStepID.GROUP_SHOTS: return 'groupShots';
+    case PortalStepID.PHOTO_REQUESTS: return 'photoRequests';
+    case PortalStepID.TIMELINE: return 'timeline';
+    default: throw new Error(`Unknown section type for step: ${stepId}`);
+  }
+};
 
 export const usePortalStore = create<PortalState & PortalActions>(storeCreator);
