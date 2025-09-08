@@ -194,8 +194,7 @@ export interface AuthResponse {
 const SectionConfigSchema = z.object({
   finalized: z.boolean().default(false),
   locked: z.boolean().default(false),
-  updatedAt: FirestoreTimestampSchema.optional().nullable(),
-  multipleLocations: z.boolean().default(false), // Add this for locations
+  updatedAt: FirestoreTimestampSchema.optional().nullable(),// Add this for locations
 });
 export type SectionConfig = z.infer<typeof SectionConfigSchema>;
 
@@ -240,7 +239,7 @@ export type ClientLocation = z.infer<typeof ClientLocationSchema>;
 
 export const PortalLocationDataSchema = z.object({
   config: SectionConfigSchema.extend({
-    multipleLocations: z.boolean().default(false),
+    multipleLocations: z.boolean().optional().default(false),
   }),
   items: z.array(ClientLocationSchema),
 });

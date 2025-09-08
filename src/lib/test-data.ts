@@ -46,7 +46,7 @@ import {
   };
   
   export const testLocations: PortalLocationData = {
-      config: { multipleLocations: true, finalized: false, locked: false, updatedAt: null },
+      config: { finalized: false, locked: false, updatedAt: null, multipleLocations: false },
       items: [
           { id: 'loc1', locationName: 'Grand Hotel', locationType: LocationType.GETTING_READY_1, locationAddress1: '123 Main St', locationPostcode: 'SW1A 0AA', locationNotes: 'Bridal suite', nextLocationTravelTimeEstimate: 15, nextLocationTravelArrangements: 'Car', arriveTime: { seconds: Math.floor(new Date().getTime() / 1000), nanoseconds: 0 }, leaveTime: { seconds: Math.floor(new Date().getTime() / 1000) + 3600, nanoseconds: 0 } },
           { id: 'loc2', locationName: 'City Hall', locationType: LocationType.CEREMONY, locationAddress1: '456 High St', locationPostcode: 'WC1A 2AA', locationNotes: 'Ceremony at 2 PM', nextLocationTravelTimeEstimate: 15, nextLocationTravelArrangements: 'Car', arriveTime: { seconds: Math.floor(new Date().getTime() / 1000), nanoseconds: 0 }, leaveTime: { seconds: Math.floor(new Date().getTime() / 1000) + 3600, nanoseconds: 0 } },
