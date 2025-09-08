@@ -187,6 +187,7 @@ export const LocationsSection: React.FC = () => {
                 entity={formState}
                 title={editingEntity ? 'Edit Location' : 'Add New Location'}
                 isLocked={isLocked || false}
+                description="Provide the location details including name, address, and type for your wedding day."
             >
                 <div className="space-y-2">
                     <div className="space-y-0.5">

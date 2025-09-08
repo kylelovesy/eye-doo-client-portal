@@ -177,6 +177,7 @@ export const TimelineSection: React.FC = () => {
                 entity={formState}
                 title={editingEntity ? 'Edit Event' : 'Add New Event'}
                 isLocked={isLocked || false}
+                description="Add details about your wedding day timeline event including title, type, start time, and duration."
             >
                 <div className="space-y-2">
                     <div className="space-y-0.5">

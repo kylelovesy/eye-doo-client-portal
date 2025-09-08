@@ -199,6 +199,7 @@ export const PhotoRequestsSection: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={closeModal}
                 onSave={handleSubmitWithUpload}
+                description="Specify your photo request with title, priority, and any additional details or reference image."
                 entity={formState}
                 title={editingEntity ? 'Edit Request' : 'Add New Request'}
                 isLocked={isLocked || false}

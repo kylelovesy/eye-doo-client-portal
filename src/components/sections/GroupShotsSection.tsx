@@ -205,6 +205,7 @@ export const GroupShotsSection: React.FC = () => {
                 entity={formState}
                 title="Request Group Shot"
                 isLocked={isLocked || false}
+                description="Describe your custom group photo request including who should be in the photo and any special details."
             >
                 <div className="space-y-0.5">
                     <Label htmlFor="customShotName" className="font-sans text-xs text-muted-foreground">Title *</Label>
