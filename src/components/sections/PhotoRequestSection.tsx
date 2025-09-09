@@ -15,16 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Camera, Pencil, CheckCircle, Lock, X } from 'lucide-react';
 
-/**
- * PhotoRequestsSection Component
- *
- * Uses the new combined portal activity functions:
- * - updateClientPortalActivity: Handles all client-side portal interactions
- * - logPortalActivity: Tracks user behavior for analytics
- *
- * Benefits: Reduced function calls, better performance, centralized logging
- */
-
 const storage = getStorage(app);
 
 const emptyRequest: Omit<ClientPhotoRequest, 'id'> = {
@@ -53,8 +43,7 @@ export const PhotoRequestsSection: React.FC = () => {
         isSaving,
         showSaveConfirmation,
         isSkipping,
-        skipStep,
-        logAnalyticsEvent // New: Analytics logging function
+        skipStep
     } = usePortalStore();
     const [formState, setFormState] = useState(emptyRequest);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -96,20 +85,8 @@ export const PhotoRequestsSection: React.FC = () => {
 
     const handleSubmitWithUpload = async () => {
         if (!projectId) return;
-
+        
         let imageUrl = editingEntity?.imageUrl || '';
-        const hasImageUpload = !!selectedFile;
-
-        // Analytics: Track request creation
-        logAnalyticsEvent('photo_request_created', {
-            title: formState.title,
-            type: formState.type,
-            priority: formState.priority,
-            hasDescription: !!formState.description,
-            descriptionLength: formState.description?.length || 0,
-            hasImageUpload,
-            isEdit: !!editingEntity
-        });
 
         if (selectedFile) {
             const storageRef = ref(storage, `projects/${projectId}/photo_requests/${Date.now()}_${selectedFile.name}`);
@@ -118,44 +95,19 @@ export const PhotoRequestsSection: React.FC = () => {
             await new Promise<void>((resolve, reject) => {
                 uploadTask.on('state_changed',
                     (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
-                    (error) => {
-                        console.error("Upload failed:", error);
-                        // Analytics: Track upload failure
-                        logAnalyticsEvent('photo_request_upload_failed', {
-                            fileSize: selectedFile.size,
-                            fileType: selectedFile.type,
-                            error: error.message
-                        });
-                        reject(error);
-                    },
+                    (error) => { console.error("Upload failed:", error); reject(error); },
                     async () => {
                         imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                        // Analytics: Track successful upload
-                        logAnalyticsEvent('photo_request_upload_success', {
-                            fileSize: selectedFile.size,
-                            fileType: selectedFile.type
-                        });
                         resolve();
                     }
                 );
             });
         }
-
+        
         handleSave({ ...formState, imageUrl });
     };
 
     const hasReachedLimit = photoRequests ? (photoRequests.items ?? []).length >= 5 : false;
-
-    // Analytics: Track component view
-    useEffect(() => {
-        logAnalyticsEvent('photo_requests_section_viewed', {
-            totalRequests: photoRequests?.items?.length || 0,
-            hasReachedLimit,
-            isLocked,
-            isFinalized,
-            canSkipStep
-        });
-    }, [logAnalyticsEvent, photoRequests?.items?.length, hasReachedLimit, isLocked, isFinalized, canSkipStep]);
 
     if (!photoRequests) return <div>Loading...</div>;
 
@@ -307,10 +259,6 @@ export const PhotoRequestsSection: React.FC = () => {
                         <Input id="imageUpload" type="file" accept="image/*" onChange={e => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
                         {uploadProgress !== null && <Progress value={uploadProgress} className="mt-2" />}
                     </div>
-                    {/* <div>
-                        <Label htmlFor="notes" className="font-sans">Notes</Label>
-                        <Textarea id="notes" value={formState.notes || ''} onChange={(e) => setFormState({ ...formState, notes: e.target.value })} />
-                    </div> */}
                 </div>
             </AddEditModal>
 

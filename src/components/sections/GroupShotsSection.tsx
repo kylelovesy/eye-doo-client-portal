@@ -13,16 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Trash2, Clock, CheckCircle, Lock, X } from 'lucide-react';
 
-/**
- * GroupShotsSection Component
- *
- * Uses the new combined portal activity functions:
- * - updateClientPortalActivity: Handles all client-side portal interactions
- * - logPortalActivity: Tracks user behavior for analytics
- *
- * Benefits: Reduced function calls, better performance, centralized logging
- */
-
 const emptyCustomShot: Omit<ClientGroupShotItem, 'id' | 'isPredefined' | 'checked' | 'time'> = {
     name: '',
     categoryId: 'group_shot_cat_user', // Set to the custom category ID
@@ -30,14 +20,7 @@ const emptyCustomShot: Omit<ClientGroupShotItem, 'id' | 'isPredefined' | 'checke
 };
 
 export const GroupShotsSection: React.FC = () => {
-    const {
-        groupShots,
-        updateGroupShots,
-        project,
-        isSaving,
-        showSaveConfirmation,
-        logAnalyticsEvent // New: Analytics logging function
-    } = usePortalStore();
+    const { groupShots, updateGroupShots, project, isSaving, showSaveConfirmation } = usePortalStore();
     const [formState, setFormState] = useState(emptyCustomShot);
     const [showActionRequired, setShowActionRequired] = useState(true);
 
@@ -68,16 +51,6 @@ export const GroupShotsSection: React.FC = () => {
         }
     }, [formState.categoryId]);
 
-    // Analytics: Track component view
-    useEffect(() => {
-        logAnalyticsEvent('group_shots_section_viewed', {
-            totalShots: groupShots?.items?.length || 0,
-            selectedShots: groupShots?.items?.filter(item => item.checked).length || 0,
-            isLocked,
-            isFinalized
-        });
-    }, [logAnalyticsEvent, groupShots?.items, isLocked, isFinalized]);
-
     const totalTime = useMemo(() => {
         if (!groupShots?.items) return 0;
         return groupShots.items.reduce((sum, item) => item.checked ? sum + item.time : sum, 0);
@@ -98,28 +71,14 @@ export const GroupShotsSection: React.FC = () => {
 
     const handleToggleWants = (itemId: string) => {
         if (!groupShots) return;
-
-        const item = groupShots.items?.find(item => item.id === itemId);
-        const wasChecked = item?.checked;
         const updatedItems = (groupShots.items ?? []).map(item =>
             item.id === itemId ? { ...item, checked: !item.checked } : item
         );
         const newTotalTime = updatedItems.reduce((sum, item) => item.checked ? sum + item.time : sum, 0);
-
         updateGroupShots({
             ...groupShots,
             items: updatedItems,
             config: { ...groupShots.config, totalTimeEstimated: newTotalTime },
-        });
-
-        // Analytics: Track shot selection changes
-        logAnalyticsEvent('group_shot_toggled', {
-            shotId: itemId,
-            shotName: item?.name,
-            wasChecked,
-            isNowChecked: !wasChecked,
-            totalTime: newTotalTime,
-            category: item?.categoryId
         });
     };
     
@@ -128,16 +87,8 @@ export const GroupShotsSection: React.FC = () => {
             ...formState,
             isPredefined: false,
             checked: true,
-            time: 5,
+            time: 5, 
         };
-
-        // Analytics: Track custom shot creation
-        logAnalyticsEvent('custom_group_shot_created', {
-            shotName: formState.name,
-            hasNotes: !!formState.notes,
-            notesLength: formState.notes?.length || 0
-        });
-
         handleSave(newShotData);
         setFormState(emptyCustomShot);
     };

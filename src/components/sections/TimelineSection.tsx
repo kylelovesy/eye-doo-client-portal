@@ -11,17 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, ListChecks, CheckCircle, Lock, Pencil, X } from 'lucide-react';
-import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils';
-
-/**
- * TimelineSection Component
- *
- * Uses the new combined portal activity functions:
- * - updateClientPortalActivity: Handles all client-side portal interactions
- * - logPortalActivity: Tracks user behavior for analytics
- *
- * Benefits: Reduced function calls, better performance, centralized logging
- */ 
+import { timestampToTimeString, timeStringToTimestamp } from '@/lib/utils'; 
 
 const emptyEvent: Omit<ClientTimelineEvent, 'id' | 'startTime'> = {
     title: '',
@@ -41,14 +31,7 @@ const EmptyState = () => (
 
 
 export const TimelineSection: React.FC = () => {
-    const {
-        timeline,
-        updateTimeline,
-        project,
-        isSaving,
-        showSaveConfirmation,
-        logAnalyticsEvent // New: Analytics logging function
-    } = usePortalStore();
+    const { timeline, updateTimeline, project, isSaving, showSaveConfirmation } = usePortalStore();
     const [formState, setFormState] = useState(emptyEvent);
     const [startTimeString, setStartTimeString] = useState('');
     const [showActionRequired, setShowActionRequired] = useState(true);
@@ -76,46 +59,18 @@ export const TimelineSection: React.FC = () => {
         if (editingEntity) {
             setFormState(editingEntity);
             setStartTimeString(timestampToTimeString(editingEntity.startTime));
-
-            // Analytics: Track event editing
-            logAnalyticsEvent('timeline_event_edited', {
-                eventId: editingEntity.id,
-                eventTitle: editingEntity.title,
-                eventType: editingEntity.type,
-                duration: editingEntity.duration
-            });
-        } else {
+        } else if (isModalOpen) {
+            // Reset form state when opening modal for adding new item
             setFormState(emptyEvent);
             setStartTimeString('');
         }
-    }, [editingEntity, logAnalyticsEvent]);
-
-    // Analytics: Track component view
-    useEffect(() => {
-        logAnalyticsEvent('timeline_section_viewed', {
-            totalEvents: timeline?.items?.length || 0,
-            isLocked,
-            isFinalized
-        });
-    }, [logAnalyticsEvent, timeline?.items?.length, isLocked, isFinalized]);
+    }, [editingEntity, isModalOpen]);
 
     const handleSaveWithTimeConversion = () => {
         const eventData = {
             ...formState,
             startTime: timeStringToTimestamp(startTimeString)!,
         };
-
-        // Analytics: Track event creation
-        logAnalyticsEvent('timeline_event_created', {
-            eventTitle: formState.title,
-            eventType: formState.type,
-            duration: formState.duration,
-            startTime: startTimeString,
-            hasNotes: !!formState.clientNotes,
-            notesLength: formState.clientNotes?.length || 0,
-            isEdit: !!editingEntity
-        });
-
         handleSave(eventData);
     };
 
@@ -223,19 +178,19 @@ export const TimelineSection: React.FC = () => {
                 entity={formState}
                 title={editingEntity ? 'Edit Event' : 'Add New Event'}
                 isLocked={isLocked || false}
-                description="Add details about your wedding day timeline event including title, type, start time, and duration."
+                description="Add events to the timeline. Please include type, details, start time, and duration."
             >
-                <div className="space-y-2">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="title" className="font-sans text-xs text-muted-foreground">Event Title *</Label>
-                        <Input id="title" value={formState.title} onChange={(e) => setFormState({ ...formState, title: e.target.value })} required placeholder="Wedding Ceremony" />
-                    </div>
+                <div className="space-y-2">                    
                     <div className="space-y-0.5">
                         <Label htmlFor="type" className="font-sans text-xs text-muted-foreground">Event Type *</Label>
                         <Select value={formState.type} onValueChange={(value) => setFormState({ ...formState, type: value as TimelineEventType })}>
                             <SelectTrigger className="w-full"><SelectValue/></SelectTrigger>
                             <SelectContent>{Object.values(TimelineEventType).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-0.5">
+                        <Label htmlFor="title" className="font-sans text-xs text-muted-foreground">Event Details *</Label>
+                        <Input id="title" value={formState.title} onChange={(e) => setFormState({ ...formState, title: e.target.value })} required placeholder="Wedding Ceremony" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">                       
                         <div className="space-y-0.5">
@@ -244,7 +199,7 @@ export const TimelineSection: React.FC = () => {
                         </div>
                         <div className="space-y-0.5">
                             <Label htmlFor="duration" className="font-sans text-xs text-muted-foreground">Duration (5 mins) *</Label>
-                            <Input type="number" id="duration" min="0" step="5" value={formState.duration} onChange={(e) => setFormState({ ...formState, duration: parseInt(e.target.value, 10) || 0 })} required placeholder="30" />
+                            <Input type="number" id="duration" min="0" step="5" value={formState.duration} onChange={(e) => setFormState({ ...formState, duration: parseInt(e.target.value, 10) || 0 })} required />
                         </div>
                     </div>
                     

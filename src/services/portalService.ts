@@ -1,198 +1,34 @@
-// src/services/portalService.ts
-// TEST VERSION
-// GEM-35-PORTAL/src/services/portalService.ts
-// import {
-//   doc,
-//   getDoc,
-//   onSnapshot,
-//   Unsubscribe,
-// } from 'firebase/firestore';
-// import { httpsCallable } from 'firebase/functions';
-// import { signInWithCustomToken } from 'firebase/auth';
-// import { auth, db, functions } from '../lib/firebase'; // Assuming you have a firebase config file
-// import {
-//   AuthRequest,
-//   AuthResponse,
-//   ClientProject,
-//   PortalGroupShotData,
-//   PortalKeyPeopleData,
-//   PortalLocationData,
-//   PortalPhotoRequestData,
-//   PortalTimelineData,
-// } from '../types/types';
-// import {
-//   testProject,
-//   testKeyPeople,
-//   testLocations,
-//   testGroupShots,
-//   testPhotoRequests,
-//   testTimeline
-// } from '../lib/test-data';
+// LIVE VERSION - UPDATED FOR NEW SUBCOLLECTION STRUCTURE
+// =================================================================================
+// FIREBASE DATA STRUCTURE OVERVIEW:
+//
+// MAIN PROJECT DOCUMENT: projects/{projectId}
+// - Contains basic project information (projectInfo, photographer details, etc.)
+// - Contains portal metadata (portalId reference, launch status, etc.)
+// - NO LONGER contains the client portal configuration
+//
+// PORTAL SUBCOLLECTION: projects/{projectId}/clientPortals/default-portal
+// - Contains complete portal configuration and state
+// - steps: Array of portal steps with their current status
+// - metadata: Client access tracking and completion statistics
+// - currentStepID: Current active step for the client
+// - portalMessage: Welcome message and instructions
+// - Access control: isEnabled, accessToken, portalUrl
+//
+// SECTION DATA COLLECTIONS: projects/{projectId}/{sectionName}/items
+// - keyPeople: Client key people data
+// - locations: Event location information
+// - photoRequests: Custom photo request details
+// - groupShots: Group shot selections and categories
+// - timeline: Event timeline with scheduled activities
+//
+// COST-CONSCIOUS DESIGN:
+// - listenToCategory() provides real-time listeners (use only when necessary)
+// - fetchCategoryData() provides one-time data fetching (cost-effective default)
+// - listenToPortalData() provides portal document real-time updates (optional)
+// - Choose the appropriate method based on your cost and performance requirements
+// =================================================================================
 
-// // Define the shape of the data that can be saved.
-// // Using a discriminated union to ensure type safety.
-// type SaveableData =
-//   | { type: 'keyPeople'; data: PortalKeyPeopleData }
-//   | { type: 'locations'; data: PortalLocationData }
-//   | { type: 'photoRequests'; data: PortalPhotoRequestData }
-//   | { type: 'groupShots'; data: PortalGroupShotData }
-//   | { type: 'timeline'; data: PortalTimelineData };
-
-// interface SaveClientDataRequest {
-//   projectId: string;
-//   accessToken: string;
-//   section: SaveableData['type'];
-//   data: SaveableData['data'];
-// }
-
-// // Callable Functions
-// const getPortalAuthToken = httpsCallable<AuthRequest, AuthResponse>(functions, 'getPortalAuthToken');
-// const saveClientData = httpsCallable<SaveClientDataRequest, void>(functions, 'saveClientData');
-
-// export const portalService = {
-//   /**
-//    * Authenticates the client and fetches the initial, essential project data.
-//    * @param projectId - The ID of the project.
-//    * @param token - The client's access token.
-//    * @returns A promise that resolves with the client-safe project data.
-//    */
-//   getInitialData: async (projectId: string, token: string): Promise<ClientProject> => {
-//       if (!projectId || !token) {
-//           return Promise.resolve(testProject);
-//       }
-//     try {
-//       // Get a custom Firebase auth token from the secure cloud function
-//       const result = await getPortalAuthToken({ projectId, accessToken: token });
-//       const customToken = result.data.token;
-
-//       if (!customToken) {
-//         throw new Error('Authentication failed: No custom token received.');
-//       }
-
-//       // Sign in anonymously with the custom token
-//       await signInWithCustomToken(auth, customToken);
-
-//       // Fetch the main project document
-//       const projectRef = doc(db, 'projects', projectId);
-//       const projectSnap = await getDoc(projectRef);
-
-//       if (!projectSnap.exists()) {
-//         throw new Error('Project not found.');
-//       }
-
-//       const projectData = projectSnap.data();
-
-//       // Shape the data to return only what the client portal needs
-//       const clientProject: ClientProject = {
-//         id: projectSnap.id,
-//         projectName: projectData.projectInfo.projectName,
-//         personA: projectData.projectInfo.personA,
-//         personB: projectData.projectInfo.personB,
-//         eventDate: projectData.projectInfo.eventDate,
-//         photographerName: projectData.projectInfo.photographerName,
-//         portalMessage: projectData.clientPortal?.portalMessage,
-//         currentStepID: projectData.clientPortal?.currentStepID,
-//         portalSteps: projectData.clientPortal?.steps || [],
-//       };
-
-//       return clientProject;
-//     } catch (error) {
-//       console.error('Error during initial data fetch:', error);
-//       throw new Error('Could not load portal data.');
-//     }
-//   },
-
-//   /**
-//    * Listens for real-time updates to a specific data category (e.g., locations).
-//    * @param projectId - The ID of the project.
-//    * @param category - The category to listen to.
-//    * @param callback - The function to call with the new data.
-//    * @returns An unsubscribe function.
-//    */
-//   listenToCategory<T>(
-//     projectId: string,
-//     category: 'locations' | 'keyPeople' | 'photoRequests' | 'timeline' | 'groupShots',
-//     callback: (data: T) => void
-//   ): Unsubscribe {
-//       if (!projectId) {
-//           const testDataMap = {
-//               keyPeople: testKeyPeople,
-//               locations: testLocations,
-//               groupShots: testGroupShots,
-//               photoRequests: testPhotoRequests,
-//               timeline: testTimeline,
-//           };
-//           callback(testDataMap[category] as T);
-//           return () => {}; // No-op unsubscribe for test data
-//       }
-//     // Group shots have a different structure
-//     const docPath = category === 'groupShots'
-//       ? `projects/${projectId}/groupShotData/groupShot`
-//       : `projects/${projectId}/${category}/items`;
-
-//     const docRef = doc(db, docPath);
-
-//     return onSnapshot(docRef, (snap) => {
-//       if (snap.exists()) {
-//         callback(snap.data() as T);
-//       }
-//     });
-//   },
-
-//   /**
-//    * Saves a complete section of data via a secure callable function.
-//    * @param projectId - The ID of the project.
-//    * @param accessToken - The client's access token for verification.
-//    * @param section - The name of the section being saved.
-//    * @param data - The data payload for that section.
-//    */
-//   saveSectionData: async (
-//     projectId: string,
-//     accessToken: string,
-//     section: SaveableData['type'],
-//     data: SaveableData['data']
-//   ): Promise<void> => {
-//       if (!projectId || !accessToken) {
-//           console.log(`DEMO MODE: Saving ${section} data:`, data);
-//           return Promise.resolve();
-//       }
-//     try {
-//       await saveClientData({ projectId, accessToken, section, data });
-//     } catch (error) {
-//       console.error(`Error saving ${section} data:`, error);
-//       throw new Error(`Failed to save ${section}. Please try again.`);
-//     }
-//   },
-
-//   /**
-//    * Skips a step by marking it as finalized with actionOn set to none.
-//    * @param projectId - The ID of the project.
-//    * @param accessToken - The client's access token for verification.
-//    * @param stepId - The ID of the step to skip.
-//    */
-//   skipStep: async (
-//     projectId: string,
-//     accessToken: string,
-//     stepId: string
-//   ): Promise<void> => {
-//       if (!projectId || !accessToken) {
-//           console.log(`DEMO MODE: Skipping step ${stepId}`);
-//           return Promise.resolve();
-//       }
-//     try {
-//       // Call a cloud function to skip the step
-//       const skipStepFunction = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, void>(
-//         functions,
-//         'skipStep'
-//       );
-//       await skipStepFunction({ projectId, accessToken, stepId });
-//     } catch (error) {
-//       console.error(`Error skipping step ${stepId}:`, error);
-//       throw new Error(`Failed to skip step. Please try again.`);
-//     }
-//   },
-// };
-// LIVE VERSION
 import {
     doc,
     getDoc,
@@ -218,7 +54,12 @@ import {
     ClientGroupShotItem,
     ClientTimelineEvent,
     SectionConfig,
+    ActionOn,
+    PortalStepID,
+    SectionStatus,
+    PortalSubcollection,
   } from '@/types/types';
+
   
   // Define the shape of the data that can be saved.
   // Using a discriminated union to ensure type safety.
@@ -258,55 +99,42 @@ import {
     allLocalItems: ClientGroupShotItem[];
     config?: SectionConfig
    }, { success: boolean }>(functions, 'clientSaveGroupShotSelections');
+
   // For timeline, we'll need to handle complete replacement differently
   const clientSaveTimeline = httpsCallable<{ 
     projectId: string; 
     accessToken: string; 
     events: ClientTimelineEvent[]; 
-    config?: SectionConfig
-   }, { success: boolean }>(functions, 'clientSaveTimeline');
+    config?: SectionConfig 
+  }, { success: boolean }>(functions, 'clientSaveTimeline');
 
  
-  // Combined client portal activity function
-  const updateClientPortalActivity = httpsCallable<{
+  const trackClientAccess = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string 
+  }, { success: boolean }>(functions, 'trackClientAccess');
+
+  const updateClientCurrentStep = httpsCallable<{ 
+    projectId: string; 
+    accessToken: string; 
+    stepId: string 
+  }, { success: boolean }>(functions, 'updateClientCurrentStep');
+
+  // Add callable function
+  const updateSectionStatus = httpsCallable<{
     projectId: string;
     accessToken: string;
-    action: 'access' | 'navigate' | 'submit';
-    stepId?: string;
-    sectionId?: string;
-  }, { success: boolean; action: string }>(functions, 'updateClientPortalActivity');
+    stepId: PortalStepID;
+    status: SectionStatus;
+    actionOn: ActionOn;
+  }, { success: boolean }>(functions, 'updateSectionStatus');
 
-  // Combined photographer section management function
-  // Replaces: photographerApproveSection, photographerRequestRevision
-  // Benefits: Single function for all photographer actions, better state management
-  const photographerManageSection = httpsCallable<{
-    projectId: string;
-    sectionId: string;
-    action: 'approve' | 'request_revision';
-    revisionReason?: string;
-  }, { success: boolean; action: string }>(functions, 'photographerManageSection');
-
-  // Batch portal operations function
-  // Benefits: Handle multiple portal operations in a single atomic transaction
-  // Reduces network calls and ensures consistency
-  const batchPortalOperations = httpsCallable<{
+  // Skip step function
+  const clientSkipStep = httpsCallable<{
     projectId: string;
     accessToken: string;
-    operations: Array<{
-      type: 'track_access' | 'update_step' | 'submit_section';
-      data: Record<string, unknown>;
-    }>;
-  }, { success: boolean; results: Array<{ type: string; success: boolean; error?: string }> }>(functions, 'batchPortalOperations');
-
-  // Enhanced analytics logging function
-  // Benefits: Centralized activity logging for better insights
-  const logPortalActivity = httpsCallable<{
-    projectId: string;
-    accessToken: string;
-    activityType: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: Record<string, any>;
-  }, { success: boolean }>(functions, 'logPortalActivity');
+    stepId: string;
+  }, { success: boolean }>(functions, 'clientSkipStep');
 
   // Skip step function - commented out as it's not implemented in firestore functions
   // const skipStepFunction = httpsCallable<{ projectId: string; accessToken: string; stepId: string }, { success: boolean }>(functions, 'skipStep');
@@ -314,6 +142,14 @@ import {
   export const portalService = {
     /**
      * Authenticates the client and fetches the initial, essential project data.
+     *
+     * DATA FETCHING STRATEGY:
+     * 1. Authenticate client with custom Firebase token
+     * 2. Track client access in portal subcollection metadata
+     * 3. Fetch basic project info from main project document
+     * 4. Fetch portal configuration from clientPortals/default-portal subcollection
+     * 5. Merge and return client-safe data structure
+     *
      * @param projectId - The ID of the project.
      * @param token - The client's access token.
      * @returns A promise that resolves with the client-safe project data.
@@ -323,61 +159,129 @@ import {
         // Get a custom Firebase auth token from the secure cloud function
         const result = await getPortalAuthToken({ projectId, accessToken: token });
         const customToken = result.data.token;
-  
+
         if (!customToken) {
           throw new Error('Authentication failed: No custom token received.');
         }
-  
+
         // Sign in anonymously with the custom token
         await signInWithCustomToken(auth, customToken);
 
         // Track client access (increment count and update activity timestamp)
-        await updateClientPortalActivity({
-          projectId,
-          accessToken: token,
-          action: 'access'
-        });
-  
-        // Fetch the main project document
+        await trackClientAccess({ projectId, accessToken: token });
+
+        // Fetch the main project document for basic project info
         const projectRef = doc(db, 'projects', projectId);
         const projectSnap = await getDoc(projectRef);
-  
+
         if (!projectSnap.exists()) {
           throw new Error('Project not found.');
         }
-  
+
         const projectData = projectSnap.data();
-        const portalSteps = (projectData.clientPortal?.steps || []).map((step: PortalStep) => ({
+
+        // Fetch the portal document from the new subcollection structure
+        const portalRef = doc(db, 'projects', projectId, 'clientPortals', 'default-portal');
+        const portalSnap = await getDoc(portalRef);
+
+        if (!portalSnap.exists()) {
+          throw new Error('Portal not found. The portal may not be set up yet.');
+        }
+
+        const portalData = portalSnap.data();
+
+        // The portal steps are now stored in the portal document's steps array
+        const portalSteps = (portalData.steps || []).map((step: PortalStep) => ({
           ...step,
-          id: step.portalStepID, // Map portalStepID to id
+          id: step.portalStepID, // Map portalStepID to id for consistency
         }));
-  
+
+        // Map the portal metadata from the subcollection
+        const portalMetadata = portalData.metadata ? {
+          clientAccessCount: portalData.metadata.clientAccessCount || 0,
+          lastClientActivity: portalData.metadata.lastClientActivity || null,
+          totalSteps: portalData.metadata.totalSteps || 0,
+          completedSteps: portalData.metadata.completedSteps || 0,
+          completionPercentage: portalData.metadata.completionPercentage || 0,
+        } : undefined;
+
         // Shape the data to return only what the client portal needs
+        // Portal data now comes from the subcollection document
         const clientProject: ClientProject = {
           id: projectSnap.id,
-          projectName: projectData.projectInfo.projectName,
-          personA: projectData.projectInfo.personA,
-          personB: projectData.projectInfo.personB,
-          eventDate: projectData.projectInfo.eventDate,
-          photographerName: projectData.projectInfo.photographerName,
-          portalMessage: projectData.clientPortal?.portalMessage,
-          currentStepID: projectData.clientPortal?.currentStepID,
+          projectName: projectData.projectInfo?.projectName || '',
+          personA: {
+            firstName: projectData.projectInfo?.personA?.firstName || projectData.projectInfo?.personA || '',
+            surname: projectData.projectInfo?.personA?.surname || '',
+          },
+          personB: {
+            firstName: projectData.projectInfo?.personB?.firstName || projectData.projectInfo?.personB || '',
+            surname: projectData.projectInfo?.personB?.surname || '',
+          },
+          eventDate: projectData.projectInfo?.eventDate || null,
+          photographerName: projectData.projectInfo?.photographerName || '',
+          portalMessage: portalData.portalMessage || 'Welcome to your planning portal!',
+          currentStepID: portalData.currentStepID || 'welcome',
           portalSteps: portalSteps,
+          metadata: portalMetadata,
         };
-  
+
         return clientProject;
       } catch (error) {
         console.error('Error during initial data fetch:', error);
         throw new Error('Could not load portal data.');
       }
     },
-  
+
+    /**
+     * Fetches only the portal-specific data from the clientPortals subcollection.
+     *
+     * USE CASES:
+     * - When you need portal configuration without full project details
+     * - For portal status checks or metadata updates
+     * - When implementing real-time portal data listeners
+     *
+     * RETURNS: Complete portal document including:
+     * - steps: Array of portal steps with status and configuration
+     * - metadata: Client access statistics and completion tracking
+     * - currentStepID: Active step for client navigation
+     * - Access control settings (isEnabled, portalUrl, etc.)
+     *
+     * @param projectId - The ID of the project.
+     * @returns A promise that resolves with the portal data.
+     */
+    getPortalData: async (projectId: string): Promise<PortalSubcollection> => {
+      try {
+        const portalRef = doc(db, 'projects', projectId, 'clientPortals', 'default-portal');
+        const portalSnap = await getDoc(portalRef);
+
+        if (!portalSnap.exists()) {
+          throw new Error('Portal not found. The portal may not be set up yet.');
+        }
+
+        return portalSnap.data() as PortalSubcollection;
+      } catch (error) {
+        console.error('Error fetching portal data:', error);
+        throw new Error('Could not load portal data.');
+      }
+    },
+
     /**
      * Listens for real-time updates to a specific data category (e.g., locations).
+     *
+     * FIREBASE PATHS:
+     * - Regular categories: projects/{projectId}/{category}/items
+     * - Group shots: projects/{projectId}/groupShotData/groupShot (different structure)
+     *
+     * COST CONSIDERATIONS:
+     * - Real-time listeners consume Firebase resources continuously
+     * - Use only when real-time updates are essential
+     * - Consider using fetchCategoryData() for one-time fetches instead
+     *
      * @param projectId - The ID of the project.
      * @param category - The category to listen to.
      * @param callback - The function to call with the new data.
-     * @returns An unsubscribe function.
+     * @returns An unsubscribe function to stop the listener.
      */
     listenToCategory<T>(
       projectId: string,
@@ -398,13 +302,24 @@ import {
       });
     },
   
-      /**
-   * Saves a complete section of data via a secure callable function.
-   * @param projectId - The ID of the project.
-   * @param accessToken - The client's access token for verification.
-   * @param section - The name of the section being saved.
-   * @param data - The data payload for that section.
-   */
+        /**
+     * Saves a complete section of data via secure Firebase callable functions.
+     *
+     * DATA STORAGE STRUCTURE:
+     * - Saves to: projects/{projectId}/{sectionName}/items
+     * - Each section has its own subcollection under the project
+     * - Maintains separation between portal configuration and section data
+     *
+     * SECURITY:
+     * - All saves go through Firebase callable functions for validation
+     * - Access tokens are verified server-side
+     * - Input validation prevents data corruption
+     *
+     * @param projectId - The ID of the project.
+     * @param accessToken - The client's access token for verification.
+     * @param section - The name of the section being saved.
+     * @param data - The data payload for that section.
+     */
     saveSectionData: async (
       projectId: string,
       accessToken: string,
@@ -459,15 +374,21 @@ import {
             break;
 
           case 'timeline':
-            // Enhanced timeline saving with complete replacement support
-            // Benefits: Atomic timeline updates, supports config, better performance
+            // For timeline, we need to save each event individually since the firestore function
+            // only supports adding single events with arrayUnion
+            // Note: This approach may not be ideal for replacing entire timeline.
+            // Consider updating the firestore function to support complete replacement.
             const timelineData = data as PortalTimelineData;
-            await clientSaveTimeline({
-              projectId,
-              accessToken,
-              events: timelineData.items || [],
-              config: timelineData.config
-            });
+            const timelineEvents = timelineData.items || [];
+            if (timelineEvents.length > 0) {
+              // Save each event individually (this may create duplicates if events already exist)
+              // For now, we'll save the first event as an example
+              await clientSaveTimeline({
+                projectId,
+                accessToken,
+                events: timelineEvents
+              });
+            }
             break;
 
           default:
@@ -480,31 +401,75 @@ import {
     },
 
     /**
- * Updates the client's current step in Firestore
- * @param projectId - The ID of the project
- * @param accessToken - The client's access token
- * @param stepId - The step ID to set as current
- */
-  updateCurrentStep: async (
-    projectId: string,
-    accessToken: string,
-    stepId: string
-  ): Promise<void> => {
-    try {
-      await updateClientPortalActivity({
-        projectId,
-        accessToken,
-        action: 'navigate',
-        stepId
+     * Manually fetches category data once (cost-effective alternative to real-time listeners)
+     * @param projectId - The ID of the project.
+     * @param category - The category to fetch.
+     * @returns A promise that resolves with the category data.
+     */
+    fetchCategoryData: async <T>(
+      projectId: string,
+      category: 'locations' | 'keyPeople' | 'photoRequests' | 'timeline' | 'groupShots'
+    ): Promise<T> => {
+      try {
+        // Group shots have a different structure
+        const docPath = category === 'groupShots'
+          ? `projects/${projectId}/groupShotData/groupShot`
+          : `projects/${projectId}/${category}/items`;
+
+        const docRef = doc(db, docPath);
+        const snap = await getDoc(docRef);
+
+        if (snap.exists()) {
+          return snap.data() as T;
+        } else {
+          throw new Error(`No data found for category: ${category}`);
+        }
+      } catch (error) {
+        console.error(`Error fetching ${category} data:`, error);
+        throw new Error(`Failed to fetch ${category} data`);
+      }
+    },
+
+    /**
+     * Listens for real-time updates to the portal document itself.
+     * This is useful for tracking changes to portal metadata, current step, etc.
+     * @param projectId - The ID of the project.
+     * @param callback - The function to call with the new portal data.
+     * @returns An unsubscribe function.
+     */
+    listenToPortalData: (projectId: string, callback: (data: PortalSubcollection) => void): Unsubscribe => {
+      const portalRef = doc(db, 'projects', projectId, 'clientPortals', 'default-portal');
+      return onSnapshot(portalRef, (snap) => {
+        if (snap.exists()) {
+          callback(snap.data() as PortalSubcollection);
+        }
       });
-    } catch (error) {
-      console.error(`Error updating current step to ${stepId}:`, error);
-      throw new Error('Failed to update current step.');
-    }
-  },
+    },
+
+    /**
+     * Updates the client's current step in the portal document within the subcollection.
+     * This calls the Firebase function which updates the currentStepID in the portal subcollection.
+     * @param projectId - The ID of the project
+     * @param accessToken - The client's access token
+     * @param stepId - The step ID to set as current
+     */
+    updateCurrentStep: async (
+      projectId: string,
+      accessToken: string,
+      stepId: string
+    ): Promise<void> => {
+      try {
+        // This Firebase function updates the portal document in the subcollection
+        await updateClientCurrentStep({ projectId, accessToken, stepId });
+      } catch (error) {
+        console.error(`Error updating current step to ${stepId}:`, error);
+        throw new Error('Failed to update current step.');
+      }
+    },
 
   /**
    * Skips a step by marking it as finalized with actionOn set to none.
+   * This updates the portal document, section config, and increments completed steps.
    * @param projectId - The ID of the project.
    * @param accessToken - The client's access token for verification.
    * @param stepId - The ID of the step to skip.
@@ -514,116 +479,72 @@ import {
     accessToken: string,
     stepId: string
   ): Promise<void> => {
-    // Skip step function is not implemented in firestore functions yet
-    // For now, we'll throw an error
-    console.warn(`Skip step functionality not implemented for step: ${stepId}`);
-    throw new Error(`Skip step functionality is not yet available. Please contact support.`);
-  },
-
-  // Add method
-  updateSectionStatus: async (
-    projectId: string,
-    accessToken: string,
-    sectionId: string
-  ): Promise<void> => {
     try {
-      await updateClientPortalActivity({
+      await clientSkipStep({
         projectId,
         accessToken,
-        action: 'submit',
-        sectionId
+        stepId
       });
     } catch (error) {
-      console.error(`Error updating section status for ${sectionId}:`, error);
-      throw new Error('Failed to update section status.');
+      console.error(`Error skipping step ${stepId}:`, error);
+      throw new Error(`Failed to skip step. Please try again.`);
     }
   },
 
-  /**
-   * Photographer section management - approve or request revision
-   * Benefits: Single function for all photographer actions, better state management
-   * @param projectId - The ID of the project
-   * @param sectionId - The section to manage
-   * @param action - 'approve' or 'request_revision'
-   * @param revisionReason - Required if action is 'request_revision'
-   */
-  photographerManageSection: async (
-    projectId: string,
-    sectionId: string,
-    action: 'approve' | 'request_revision',
-    revisionReason?: string
-  ): Promise<{ success: boolean; action: string }> => {
-    try {
-      const result = await photographerManageSection({
-        projectId,
-        sectionId,
-        action,
-        revisionReason
-      });
-      return result.data;
-    } catch (error) {
-      console.error(`Error managing section ${sectionId} with action ${action}:`, error);
-      throw new Error(`Failed to ${action} section.`);
-    }
-  },
-
-  /**
-   * Batch portal operations - handle multiple operations atomically
-   * Benefits: Reduces network calls, ensures consistency across operations
-   * @param projectId - The ID of the project
-   * @param accessToken - Client access token
-   * @param operations - Array of operations to perform
-   */
-  batchPortalOperations: async (
-    projectId: string,
-    accessToken: string,
-    operations: Array<{
-      type: 'track_access' | 'update_step' | 'submit_section';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: any;
-    }>
-  ): Promise<{ success: boolean; results: Array<{ type: string; success: boolean; error?: string }> }> => {
-    try {
-      const result = await batchPortalOperations({
-        projectId,
-        accessToken,
-        operations
-      });
-      return result.data;
-    } catch (error) {
-      console.error('Error performing batch portal operations:', error);
-      throw new Error('Failed to perform batch operations.');
-    }
-  },
-
-  /**
-   * Enhanced analytics logging for better insights
-   * Benefits: Centralized activity tracking, session management, user behavior insights
-   * @param projectId - The ID of the project
-   * @param accessToken - Client access token
-   * @param activityType - Type of activity being logged
-   * @param metadata - Additional metadata for the activity
-   */
-  logPortalActivity: async (
-    projectId: string,
-    accessToken: string,
-    activityType: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: Record<string, any>
-  ): Promise<{ success: boolean }> => {
-    try {
-      const result = await logPortalActivity({
-        projectId,
-        accessToken,
-        activityType,
-        metadata
-      });
-      return result.data;
-    } catch (error) {
-      console.error(`Error logging portal activity ${activityType}:`, error);
-      // Don't throw error for logging failures to avoid disrupting user flow
-      return { success: false };
-    }
-  },
+    /**
+     * Updates the section status in the portal document within the subcollection.
+     * This calls the Firebase function which updates the steps array in the portal subcollection.
+     * @param projectId - The ID of the project
+     * @param accessToken - The client's access token
+     * @param stepId - The step ID to update
+     * @param status - The new status for the step
+     * @param actionOn - Who should take action next
+     */
+    updateSectionStatus: async (
+      projectId: string,
+      accessToken: string,
+      stepId: PortalStepID,
+      status: SectionStatus,
+      actionOn: ActionOn
+    ): Promise<void> => {
+      try {
+        // This Firebase function updates the portal document's steps array in the subcollection
+        await updateSectionStatus({ projectId, accessToken, stepId, status, actionOn });
+      } catch (error) {
+        console.error(`Error updating section status for ${stepId}:`, error);
+        throw new Error('Failed to update section status.');
+      }
+    },
 };
-  
+
+// USAGE GUIDE FOR NEW SUBCOLLECTION ARCHITECTURE
+// =================================================================================
+// INITIALIZATION:
+// 1. const projectData = await portalService.getInitialData(projectId, token)
+//    - Fetches project info + portal config from subcollection
+//    - Authenticates client and tracks access
+//
+// DATA FETCHING PATTERNS:
+// 2a. Real-time listeners (higher cost):
+//    const unsubscribe = portalService.listenToCategory(projectId, 'locations', callback)
+//
+// 2b. One-time fetch (cost-effective):
+//    const data = await portalService.fetchCategoryData(projectId, 'locations')
+//
+// 2c. Portal-only data:
+//    const portalData = await portalService.getPortalData(projectId)
+//
+// SAVING DATA:
+// 3. await portalService.saveSectionData(projectId, token, 'locations', locationData)
+//    - Saves to projects/{projectId}/locations/items
+//    - Updates section status in portal subcollection
+//
+// NAVIGATION:
+// 4. await portalService.updateCurrentStep(projectId, token, 'keyPeople')
+//    - Updates currentStepID in portal subcollection
+//
+// COST OPTIMIZATION:
+// - Use fetchCategoryData() for one-time reads instead of listeners
+// - Only enable real-time listeners when continuous updates are essential
+// - Portal data changes trigger automatic UI updates via store listeners
+// =================================================================================

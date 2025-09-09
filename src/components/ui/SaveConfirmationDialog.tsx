@@ -1,14 +1,13 @@
 import React from 'react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface SaveConfirmationDialogProps {
   isOpen: boolean;
@@ -28,35 +27,38 @@ export const SaveConfirmationDialog: React.FC<SaveConfirmationDialogProps> = ({
   isSaving = false,
 }) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="w-[90vw] max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl font-serif text-center">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-[90vw] max-w-md text-center">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">
             Complete Section?
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-center font-sans text-base mt-2">
+          </DialogTitle>
+          <DialogDescription className="font-sans text-base mt-2">
             Is this {sectionName} section complete?<br />
             <br />
             Continuing will lock {sectionName} and send it to {photographerName} for review. It can be unlocked for further editing if required.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-          <AlertDialogCancel 
-            onClick={onClose}
-            disabled={isSaving}
-            className="w-full sm:w-auto"
-          >
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex-col gap-2 w-full">
+          <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="w-full sm:w-auto"
+            size="sm"
+            className="w-full rounded-md shadow-sm text-lg h-8 tracking-wide"
           >
             {isSaving ? 'Saving...' : 'Proceed with Save'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+          <Button
+            onClick={onClose}
+            disabled={isSaving}
+            variant="secondary"
+            size="sm"
+            className="w-full rounded-md shadow-sm text-lg h-8 tracking-wide"
+          >
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

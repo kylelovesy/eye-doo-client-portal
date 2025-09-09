@@ -1,3 +1,19 @@
+// src/types/types.ts - TYPE DEFINITIONS FOR CLIENT PORTAL
+// =================================================================================
+// UPDATED FOR NEW SUBCOLLECTION ARCHITECTURE:
+//
+// DATA STRUCTURE OVERVIEW:
+// 1. PortalSubcollection - Complete portal configuration in clientPortals/default-portal
+// 2. ClientProject - Client-safe project data (combines project + portal info)
+// 3. Section-specific types for keyPeople, locations, photoRequests, etc.
+//
+// TYPE SAFETY FEATURES:
+// - Zod schemas for runtime validation and TypeScript inference
+// - Discriminated unions for type-safe data handling
+// - Strict typing for Firebase document structures
+// - Client-safe types that exclude sensitive server-only data
+// =================================================================================
+
 import { z } from 'zod';
 
 // Reusable Schemas
@@ -125,24 +141,98 @@ export const PortalStepSchema = z.object({
 export type PortalStep = z.infer<typeof PortalStepSchema>;
 
 // Client Portal Metadata Schema
+// Updated to match the portal subcollection metadata structure
 export const ClientPortalMetadataSchema = z.object({
   clientAccessCount: z.number().default(0),
   lastClientActivity: FirestoreTimestampSchema.optional().nullable(),
+  totalSteps: z.number().default(0),
+  completedSteps: z.number().default(0),
+  completionPercentage: z.number().default(0),
 });
 export type ClientPortalMetadata = z.infer<typeof ClientPortalMetadataSchema>;
 
-// This is the main schema for the data passed to the client portal
+// Portal Subcollection Document Schema
+// ============================================================================
+// REPRESENTS: projects/{projectId}/clientPortals/default-portal
+//
+// PURPOSE:
+// - Complete portal configuration and state management
+// - Client access control and authentication tracking
+// - Step-by-step progress tracking and navigation
+// - Metadata for analytics and completion statistics
+//
+// STRUCTURE:
+// - Portal setup and configuration flags
+// - Access control (tokens, URLs, enable/disable)
+// - Client navigation state (currentStepID, steps array)
+// - Activity tracking (metadata with access counts, completion stats)
+// ============================================================================
+export const PortalSubcollectionSchema = z.object({
+  // Portal Setup & Configuration
+  isSetup: z.boolean(),                    // Whether portal has been configured
+  portalSetupComplete: z.boolean(),        // Whether setup process is finished
+  isEnabled: z.boolean(),                  // Whether portal is accessible to client
+
+  // Access Control
+  portalUrl: z.string(),                   // Public URL for client access
+  accessToken: z.string(),                 // Secure token for authentication
+
+  // Timestamps
+  setupDate: FirestoreTimestampSchema,     // When portal was first created
+  lastUpdated: FirestoreTimestampSchema,   // Last modification timestamp
+
+  // Client Navigation
+  currentStepID: z.nativeEnum(PortalStepID), // Current active step
+  portalMessage: z.string(),               // Welcome message and instructions
+
+  // Portal State
+  metadata: ClientPortalMetadataSchema,   // Access statistics and completion data
+  steps: z.array(PortalStepSchema),        // Array of portal steps with status
+});
+export type PortalSubcollection = z.infer<typeof PortalSubcollectionSchema>;
+
+// Client Project Schema
+// ============================================================================
+// REPRESENTS: Combined data sent to client portal (project + portal info)
+//
+// PURPOSE:
+// - Client-safe data structure for portal UI consumption
+// - Combines basic project info with portal configuration
+// - Excludes sensitive server-only data and access tokens
+// - Provides all necessary data for client-side portal functionality
+//
+// DATA SOURCES:
+// - Project document: Basic project info (names, dates, photographer)
+// - Portal subcollection: Portal configuration, steps, and metadata
+//
+// SECURITY:
+// - No sensitive authentication tokens or server configuration
+// - Only client-relevant data for UI rendering and navigation
+// ============================================================================
 export const ClientProjectSchema = z.object({
-  id: z.string(),
-  projectName: z.string(),
-  personA: z.object({ firstName: z.string(), surname: z.string().optional() }),
-  personB: z.object({ firstName: z.string(), surname: z.string().optional() }),
-  eventDate: FirestoreTimestampSchema,
-  photographerName: z.string(),
-  portalMessage: z.string().optional(),
-  currentStepID: z.nativeEnum(PortalStepID),
-  portalSteps: z.array(PortalStepSchema),
-  metadata: ClientPortalMetadataSchema.optional(),
+  // Project Identity
+  id: z.string(),                          // Unique project identifier
+  projectName: z.string(),                 // Human-readable project name
+
+  // Couple Information
+  personA: z.object({                      // First person in couple
+    firstName: z.string(),
+    surname: z.string().optional()
+  }),
+  personB: z.object({                      // Second person in couple
+    firstName: z.string(),
+    surname: z.string().optional()
+  }),
+
+  // Event Details
+  eventDate: FirestoreTimestampSchema,     // Wedding/event date
+  photographerName: z.string(),            // Assigned photographer
+
+  // Portal Configuration
+  portalMessage: z.string().optional(),    // Welcome message
+  currentStepID: z.nativeEnum(PortalStepID), // Current navigation step
+  portalSteps: z.array(PortalStepSchema),  // All available steps
+  metadata: ClientPortalMetadataSchema.optional(), // Access statistics
 });
 export type ClientProject = z.infer<typeof ClientProjectSchema>;
 
@@ -199,8 +289,18 @@ const SectionConfigSchema = z.object({
 export type SectionConfig = z.infer<typeof SectionConfigSchema>;
 
 // Portal Key People Data
-// Config
-// Items (Key People)
+// ============================================================================
+// REPRESENTS: projects/{projectId}/keyPeople/items
+//
+// PURPOSE:
+// - Client-defined list of important people for wedding photography
+// - Roles, involvement levels, and special photography requirements
+// - Helps photographer identify VIPs and plan photo coverage
+//
+// STRUCTURE:
+// - config: Section configuration (finalized, locked, timestamps)
+// - items: Array of key people with roles and requirements
+// ============================================================================
 export const ClientKeyPersonSchema = z.object({
   id: z.string(),
   fullName: z.string().min(1, 'Full name is required'),
@@ -221,8 +321,23 @@ export const PortalKeyPeopleDataSchema = z.object({
 export type PortalKeyPeopleData = z.infer<typeof PortalKeyPeopleDataSchema>;
 
 // Portal Location Data
-// Config
-// Items (Locations)
+// ============================================================================
+// REPRESENTS: projects/{projectId}/locations/items
+//
+// PURPOSE:
+// - Client-defined event locations and venues
+// - Travel logistics and timing coordination
+// - Helps photographer plan location-based photo shoots
+//
+// STRUCTURE:
+// - config: Section configuration with multipleLocations flag
+// - items: Array of locations with addresses and timing
+//
+// FEATURES:
+// - Supports single venue or multiple location events
+// - Includes travel time estimates between locations
+// - Arrival/departure times for each location
+// ============================================================================
 export const ClientLocationSchema = z.object({
   id: z.string(),
   locationName: z.string().min(1, 'Location name is required'),
